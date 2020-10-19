@@ -1,0 +1,1513 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={HarvardX PH125.9xData Science: Capstone: Movielens recommendation system},
+  pdfauthor={Yannick Hermans},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs}
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+
+\title{HarvardX PH125.9xData Science: Capstone: Movielens recommendation system}
+\author{Yannick Hermans}
+\date{1-10-2020}
+
+\begin{document}
+\maketitle
+
+\hypertarget{introduction}{%
+\subsection{Introduction}\label{introduction}}
+
+In 2006 Netflix launched a competition where participants were asked to
+optimize Netflix's movie recommendation system with at least 10 \%. The
+winners were promised a prize worth \$1M. The challenge was to predict
+user ratings as accurately as possible based on a dataset containing
+previous user ratings. There was no additional knowledge on the users or
+movies. In 2009 BellKor's Pragmatic Chaos team was able to best
+Netflix's movie recommendation algorithm by 10.06\%
+
+In this capstone project, which forms the conclusion to the HarvardX
+PH125.9xData Science course, the goal is to build towards the
+recommendation algorithm that the winners of the Netflix challenge
+developed. This project will represent the knowledge I gained throughout
+the edX data science course on machine learning algorithms, data
+processing and data exploration. A reduced version of the open source
+MovieLens data set with 10M ratings, from 10,000 users on 72,000 movies,
+has been used for this data science project.
+
+This report contains the data processing steps, data exploratory
+analysis and a few machine learning algorithms.
+
+\hypertarget{data-preprocessing}{%
+\subsection{Data preprocessing}\label{data-preprocessing}}
+
+First the necessary packages are installed and loaded. The 10M MovieLens
+dataset is loaded and separated into a training (``edx'') and a
+validation ``validation'' set. The code for these preprocessing steps is
+based on the already provided code in the edx capstone project module.
+\url{https://courses.edx.org/courses/course-v1:HarvardX+PH125.9x+2T2018/courseware/dd9a048b16ca477a8f0aaf1d888f0734/e8800e37aa444297a3a2f35bf84ce452/?child=first}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#########################################################}
+\CommentTok{# Create edx set, validation set (final hold_out test set)}
+\CommentTok{#########################################################}
+
+\CommentTok{# Note: this process could take a couple of minutes}
+
+\ControlFlowTok{if}\NormalTok{(}\OperatorTok{!}\KeywordTok{require}\NormalTok{(tidyverse)) }\KeywordTok{install.packages}\NormalTok{(}\StringTok{"tidyverse"}\NormalTok{, }\DataTypeTok{repos =} \StringTok{"http://cran.us.r-project.org"}\NormalTok{)}
+\ControlFlowTok{if}\NormalTok{(}\OperatorTok{!}\KeywordTok{require}\NormalTok{(caret)) }\KeywordTok{install.packages}\NormalTok{(}\StringTok{"caret"}\NormalTok{, }\DataTypeTok{repos =} \StringTok{"http://cran.us.r-project.org"}\NormalTok{)}
+\ControlFlowTok{if}\NormalTok{(}\OperatorTok{!}\KeywordTok{require}\NormalTok{(data.table)) }\KeywordTok{install.packages}\NormalTok{(}\StringTok{"data.table"}\NormalTok{, }\DataTypeTok{repos =} \StringTok{"http://cran.us.r-project.org"}\NormalTok{)}
+
+\KeywordTok{library}\NormalTok{(tidyverse)}
+\KeywordTok{library}\NormalTok{(caret)}
+\KeywordTok{library}\NormalTok{(data.table)}
+
+\CommentTok{# MovieLens 10M dataset:}
+\CommentTok{# https://grouplens.org/datasets/movielens/10m/}
+\CommentTok{# http://files.grouplens.org/datasets/movielens/ml-10m.zip}
+
+\NormalTok{dl <-}\StringTok{ }\KeywordTok{tempfile}\NormalTok{()}
+\KeywordTok{download.file}\NormalTok{(}\StringTok{"http://files.grouplens.org/datasets/movielens/ml-10m.zip"}\NormalTok{, dl)}
+\NormalTok{ratings <-}\StringTok{ }\KeywordTok{fread}\NormalTok{(}\DataTypeTok{text =} \KeywordTok{gsub}\NormalTok{(}\StringTok{"::"}\NormalTok{, }\StringTok{"}\CharTok{\textbackslash{}t}\StringTok{"}\NormalTok{, }\KeywordTok{readLines}\NormalTok{(}\KeywordTok{unzip}\NormalTok{(dl, }\StringTok{"ml-10M100K/ratings.dat"}\NormalTok{))),}
+                 \DataTypeTok{col.names =} \KeywordTok{c}\NormalTok{(}\StringTok{"userId"}\NormalTok{, }\StringTok{"movieId"}\NormalTok{, }\StringTok{"rating"}\NormalTok{, }\StringTok{"timestamp"}\NormalTok{))}
+
+\NormalTok{movies <-}\StringTok{ }\KeywordTok{str_split_fixed}\NormalTok{(}\KeywordTok{readLines}\NormalTok{(}\KeywordTok{unzip}\NormalTok{(dl, }\StringTok{"ml-10M100K/movies.dat"}\NormalTok{)), }\StringTok{"}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{::"}\NormalTok{, }\DecValTok{3}\NormalTok{)}
+\KeywordTok{colnames}\NormalTok{(movies) <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"movieId"}\NormalTok{, }\StringTok{"title"}\NormalTok{, }\StringTok{"genres"}\NormalTok{)}
+
+\NormalTok{movies <-}\StringTok{ }\KeywordTok{as.data.frame}\NormalTok{(movies) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{movieId =} \KeywordTok{as.numeric}\NormalTok{(movieId),}
+                                           \DataTypeTok{title =} \KeywordTok{as.character}\NormalTok{(title),}
+                                           \DataTypeTok{genres =} \KeywordTok{as.character}\NormalTok{(genres))}
+
+\NormalTok{movielens <-}\StringTok{ }\KeywordTok{left_join}\NormalTok{(ratings, movies, }\DataTypeTok{by =} \StringTok{"movieId"}\NormalTok{)}
+
+\CommentTok{# Validation set will contain 10% of the MovieLens data set}
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DataTypeTok{sample.kind =} \StringTok{"Rounding"}\NormalTok{)}
+\NormalTok{test_index <-}\StringTok{ }\KeywordTok{createDataPartition}\NormalTok{(}\DataTypeTok{y =}\NormalTok{ movielens}\OperatorTok{$}\NormalTok{rating, }\DataTypeTok{times =} \DecValTok{1}\NormalTok{, }\DataTypeTok{p =} \FloatTok{0.1}\NormalTok{, }\DataTypeTok{list =} \OtherTok{FALSE}\NormalTok{)}
+\NormalTok{edx <-}\StringTok{ }\NormalTok{movielens[}\OperatorTok{-}\NormalTok{test_index,]}
+\NormalTok{temp <-}\StringTok{ }\NormalTok{movielens[test_index,]}
+\CommentTok{# Make sure userId and movieId in validation set are also in edx set}
+\NormalTok{validation <-}\StringTok{ }\NormalTok{temp }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{semi_join}\NormalTok{(edx, }\DataTypeTok{by =} \StringTok{"movieId"}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{semi_join}\NormalTok{(edx, }\DataTypeTok{by =} \StringTok{"userId"}\NormalTok{)}
+\CommentTok{# Add rows removed from validation set back into edx set}
+\NormalTok{removed <-}\StringTok{ }\KeywordTok{anti_join}\NormalTok{(temp, validation)}
+\NormalTok{edx <-}\StringTok{ }\KeywordTok{rbind}\NormalTok{(edx, removed)}
+
+\KeywordTok{rm}\NormalTok{(dl, ratings, movies, test_index, temp, movielens, removed)}
+\end{Highlighting}
+\end{Shaded}
+
+The validation set is used to determine the accuracy of the final movie
+recommendation algorithm. The other models are tested by splitting up
+the edx set into a training (edx\_training\_set) and a test set
+(edx\_test\_set).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Split edx data in training (80%) and test set (20%) }
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{1992}\NormalTok{, }\DataTypeTok{sample.kind =} \StringTok{"Rounding"}\NormalTok{)}
+\NormalTok{edx_test_index <-}\StringTok{ }\KeywordTok{createDataPartition}\NormalTok{(}\DataTypeTok{y =}\NormalTok{ edx}\OperatorTok{$}\NormalTok{rating, }\DataTypeTok{times =} \DecValTok{1}\NormalTok{,}
+                                  \DataTypeTok{p =} \FloatTok{0.2}\NormalTok{, }\DataTypeTok{list =} \OtherTok{FALSE}\NormalTok{)}
+\NormalTok{edx_train_set <-}\StringTok{ }\NormalTok{edx[}\OperatorTok{-}\NormalTok{edx_test_index,]}
+\NormalTok{edx_test_set <-}\StringTok{ }\NormalTok{edx[edx_test_index,]}
+
+\NormalTok{edx_test_set <-}\StringTok{ }\NormalTok{edx_test_set }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{semi_join}\NormalTok{(edx_train_set, }\DataTypeTok{by =} \StringTok{"movieId"}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{semi_join}\NormalTok{(edx_train_set, }\DataTypeTok{by =} \StringTok{"userId"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+In addition, certain libraries for the data exploration and machine
+learning development are loaded
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(lubridate)}
+\KeywordTok{library}\NormalTok{(ggplot2)}
+\KeywordTok{library}\NormalTok{(recosystem)}
+\KeywordTok{library}\NormalTok{(knitr)}
+\KeywordTok{library}\NormalTok{(gridExtra)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{data-exploratory-analysis}{%
+\subsection{Data exploratory analysis}\label{data-exploratory-analysis}}
+
+\hypertarget{overview}{%
+\subsubsection{Overview}\label{overview}}
+
+First an overview of the data is given.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{kable}\NormalTok{(}\KeywordTok{head}\NormalTok{(edx))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrrll@{}}
+\toprule
+& userId & movieId & rating & timestamp & title & genres\tabularnewline
+\midrule
+\endhead
+1 & 1 & 122 & 5 & 838985046 & Boomerang (1992) &
+Comedy\textbar Romance\tabularnewline
+2 & 1 & 185 & 5 & 838983525 & Net, The (1995) &
+Action\textbar Crime\textbar Thriller\tabularnewline
+4 & 1 & 292 & 5 & 838983421 & Outbreak (1995) &
+Action\textbar Drama\textbar Sci-Fi\textbar Thriller\tabularnewline
+5 & 1 & 316 & 5 & 838983392 & Stargate (1994) &
+Action\textbar Adventure\textbar Sci-Fi\tabularnewline
+6 & 1 & 329 & 5 & 838983392 & Star Trek: Generations (1994) &
+Action\textbar Adventure\textbar Drama\textbar Sci-Fi\tabularnewline
+7 & 1 & 355 & 5 & 838984474 & Flintstones, The (1994) &
+Children\textbar Comedy\textbar Fantasy\tabularnewline
+\bottomrule
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# the number of observations in the Movielens data set}
+\KeywordTok{length}\NormalTok{(edx}\OperatorTok{$}\NormalTok{rating)}\OperatorTok{+}\KeywordTok{length}\NormalTok{(validation}\OperatorTok{$}\NormalTok{rating)}
+\end{Highlighting}
+\end{Shaded}
+
+{[}1{]} 10000054
+
+The data contains 10000054 observations and is already in a tidy format,
+which allows for straightforward data exploration in r. In addition to a
+rating, additional information can be found in the dataset such as a
+userID, a movieID, the time at which the rating was given and the genres
+to which the rated movie belongs. Before analyzing how these variables
+relate to the rating, an overview of the rating distribution is shown
+below.
+
+\includegraphics{Movielens_project_files/figure-latex/User-rating-distribution-1.pdf}
+
+The user ratings' distribution demonstrates that users mainly give a
+score of 3.0 or 4.0. In addition it is clear that users are less likely
+to give half point scores than whole point scores. In average users gave
+a score of 3.5 which is indicated by the blue dashed line.
+
+For the development of a recommendation algorithm it would be
+informative to know how the additional variables in the 10M Movielens
+dataset relate to the ratings. This will be explored in the following.
+
+\hypertarget{relation-movieidmoviename-to-user-rating}{%
+\subsubsection{Relation MovieId(Moviename) to user
+rating}\label{relation-movieidmoviename-to-user-rating}}
+
+\includegraphics{Movielens_project_files/figure-latex/boxplot-movies-1.pdf}
+
+The boxplot above shows the variability of the rating averages for each
+movie in the edx dataset. On first sight it seems that the movieId has a
+strong influence on the rating, but let's have a look at the 10 best and
+the 10 worst rated movies.
+
+\begin{longtable}[]{@{}lrr@{}}
+\toprule
+title & movieId & mean\_rating\tabularnewline
+\midrule
+\endhead
+Blue Light, The (Das Blaue Licht) (1932) & 64275 & 5.00\tabularnewline
+Fighting Elegy (Kenka erejii) (1966) & 51209 & 5.00\tabularnewline
+Hellhounds on My Trail (1999) & 3226 & 5.00\tabularnewline
+Satan's Tango (SÃ¡tÃ¡ntangÃ³) (1994) & 33264 & 5.00\tabularnewline
+Shadows of Forgotten Ancestors (1964) & 42783 & 5.00\tabularnewline
+Sun Alley (Sonnenallee) (1999) & 53355 & 5.00\tabularnewline
+Constantine's Sword (2007) & 65001 & 4.75\tabularnewline
+Human Condition II, The (Ningen no joken II) (1959) & 26048 &
+4.75\tabularnewline
+Human Condition III, The (Ningen no joken III) (1961) & 26073 &
+4.75\tabularnewline
+Who's Singin' Over There? (a.k.a. Who Sings Over There) (Ko to tamo
+peva) (1980) & 5194 & 4.75\tabularnewline
+\bottomrule
+\end{longtable}
+
+\begin{longtable}[]{@{}lrr@{}}
+\toprule
+title & movieId & mean\_rating\tabularnewline
+\midrule
+\endhead
+Accused (Anklaget) (2005) & 61768 & 0.5000000\tabularnewline
+Besotted (2001) & 5805 & 0.5000000\tabularnewline
+Confessions of a Superhero (2007) & 63828 & 0.5000000\tabularnewline
+Hi-Line, The (1999) & 8394 & 0.5000000\tabularnewline
+War of the Worlds 2: The Next Wave (2008) & 64999 &
+0.5000000\tabularnewline
+SuperBabies: Baby Geniuses 2 (2004) & 8859 & 0.7946429\tabularnewline
+Hip Hop Witch, Da (2000) & 7282 & 0.8214286\tabularnewline
+Disaster Movie (2008) & 61348 & 0.8593750\tabularnewline
+From Justin to Kelly (2003) & 6483 & 0.9020101\tabularnewline
+Criminals (1996) & 604 & 1.0000000\tabularnewline
+\bottomrule
+\end{longtable}
+
+The top 10 and bottom 10 movies are,, however, rather obscure.
+Furthermore, many of these movies have scores which are multiples of
+0.5, indicating that only few people have rated those movies. Thus, the
+ratings already given for these movies will not be very predictive for
+how other users may rate these movies.
+
+\includegraphics{Movielens_project_files/figure-latex/histogram-movies-1.pdf}
+
+Indeed, the histogram above shows that only few movies have more than
+1000 ratings and many have less than 100 reviews.
+
+\includegraphics{Movielens_project_files/figure-latex/mean-rating-vs-n-reviews-per-movie-1.pdf}
+
+How the average ratings per movie depend on the number of reviews is
+even better visualized in the scatter plot above. It shows that movies
+which have been rated often, generally have a higher mean rating.
+Additionally, the lower the number of ratings, the stronger the
+variability of the rating. After a certain number of ratings, the
+average rating of a movie, is likely a strong predictor for what an
+unknown user would rate this movie.
+
+\hypertarget{relation-useridusers-to-user-rating}{%
+\subsubsection{Relation UserId(Users) to user
+rating}\label{relation-useridusers-to-user-rating}}
+
+Now the relation between the userId and the rating will be shown.
+
+\includegraphics{Movielens_project_files/figure-latex/boxplot-users-1.pdf}
+
+The boxplot above resembles the one for the movie - average rating
+relationship. The variability here is slightly lower though, since the
+interquartile range is narrower. However, there are still many outliers
+in the lower and higher rating range. These outliers can be due to users
+rating every movie highly/lowly or it could be users which do not have
+rated many movies yet.
+
+\includegraphics{Movielens_project_files/figure-latex/histogram-users-1.pdf}
+
+The histogram for the number of ratings per user indeed shows that most
+users have rated less than 100 movies. Their rating will be off course
+less predictive than for users who predicted more than 1000 movies.
+
+\includegraphics{Movielens_project_files/figure-latex/mean-rating-vs-n-reviews-per-user-1.pdf}
+
+The relationship between a user's average rating and the number of
+movies the user has rated is shown above. The variability in the average
+rating indeed goes down with the number of reviews a user has posted. It
+is, however, clear that some users give generally higher scores than
+others, making the UserId a good predictor for the rating.
+
+\hypertarget{relation-genres-to-user-rating}{%
+\subsubsection{Relation Genres to user
+rating}\label{relation-genres-to-user-rating}}
+
+Another variable which is contained in the 10M movielens dataset are the
+genres to which a movie belongs. The genre information is, however,
+compacted into one string per movie. To allow for further investigation
+each individual genre has to be extracted from the string
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# number of ratings for each genre}
+\NormalTok{edx_split_genres  <-}\StringTok{ }\NormalTok{edx  }\OperatorTok{%>%}\StringTok{ }\KeywordTok{separate_rows}\NormalTok{(genres, }\DataTypeTok{sep =} \StringTok{"}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{|"}\NormalTok{)}
+\KeywordTok{kable}\NormalTok{(}\KeywordTok{head}\NormalTok{(edx_split_genres))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}rrrrll@{}}
+\toprule
+userId & movieId & rating & timestamp & title & genres\tabularnewline
+\midrule
+\endhead
+1 & 122 & 5 & 838985046 & Boomerang (1992) & Comedy\tabularnewline
+1 & 122 & 5 & 838985046 & Boomerang (1992) & Romance\tabularnewline
+1 & 185 & 5 & 838983525 & Net, The (1995) & Action\tabularnewline
+1 & 185 & 5 & 838983525 & Net, The (1995) & Crime\tabularnewline
+1 & 185 & 5 & 838983525 & Net, The (1995) & Thriller\tabularnewline
+1 & 292 & 5 & 838983421 & Outbreak (1995) & Action\tabularnewline
+\bottomrule
+\end{longtable}
+
+Now the rows only contain one genre.
+
+\includegraphics{Movielens_project_files/figure-latex/n-ratings-for-each-genre-1.pdf}
+
+From the above plot one can see that particular genres were rated more
+often than others. This can be due to some genres being more popular
+than others or due to more movies having been made for that particular
+genre.
+
+\includegraphics{Movielens_project_files/figure-latex/n-movies-for-each-genre-1.pdf}
+
+The barplot above depicting the number of movies for each genre is very
+similar to the barplot for the number of ratings for each genre. This
+demonstrates that the number of reviews for a genre depends in large on
+how many movies have been made for that genre. To see which genres users
+like to rate more often, the average number of reviews per movie for
+each genre is shown below.
+
+\includegraphics{Movielens_project_files/figure-latex/n-ratings-per-movie-for-each-genre-1.pdf}
+
+It can be seen that users like to rate Adventure and Sci-Fi movies more
+often than documentaries and IMAX movies. This could be an indication
+that some genres are more popular than others.
+
+\includegraphics{Movielens_project_files/figure-latex/confidence-intervals-for-each-genre-1.pdf}
+
+However, the plot above showing the average rating and the 95\%
+confidence interval per genre is quite different from the previous bar
+plot. Thus, movies which users like to rate do not automatically yield
+higher average ratings. In addition, the average ratings per genre do
+not differ strongly from the overall rating average (blue dashed line).
+Thus, the genre to which a movie belongs does not influence the rating
+much. This is also clearly visualized in the boxplot below.
+
+\includegraphics{Movielens_project_files/figure-latex/boxplot-genres-1.pdf}
+
+\hypertarget{relation-time-of-release-and-age-at-rating-to-user-rating}{%
+\subsubsection{Relation time of release and age at rating to user
+rating}\label{relation-time-of-release-and-age-at-rating-to-user-rating}}
+
+The last features in the dataset are the date of release of the movie
+(mentioned in the title) and the timestamp of when the movie was rated.
+The timestamp first has to be transformed into a year of rating and the
+year of release has to be extracted from the title:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{edx_year <-}\StringTok{ }\NormalTok{edx }\OperatorTok{%>%}\StringTok{ }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{rate_year =} \KeywordTok{year}\NormalTok{(}\KeywordTok{as_datetime}\NormalTok{(timestamp)))}
+\NormalTok{edx_year <-}\StringTok{ }\NormalTok{edx_year }\OperatorTok{%>%}\StringTok{ }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{title =} \KeywordTok{str_replace}\NormalTok{(title,}\StringTok{"^(.+)}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{s}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{((}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{d\{4\})}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{)$"}\NormalTok{,}\StringTok{"}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{1__}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{2"}\NormalTok{ )) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{separate}\NormalTok{(title,}\KeywordTok{c}\NormalTok{(}\StringTok{"title"}\NormalTok{,}\StringTok{"release_year"}\NormalTok{),}\StringTok{"__"}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{select}\NormalTok{(}\OperatorTok{-}\NormalTok{timestamp) }
+\NormalTok{edx_year <-}\StringTok{ }\NormalTok{edx_year }\OperatorTok{%>%}\StringTok{ }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{movieage_at_rating=} \KeywordTok{as.numeric}\NormalTok{(rate_year)}\OperatorTok{-}\KeywordTok{as.numeric}\NormalTok{(release_year), }\DataTypeTok{release_year =} \KeywordTok{as.numeric}\NormalTok{(release_year))}
+\KeywordTok{kable}\NormalTok{(}\KeywordTok{head}\NormalTok{(edx_year))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}rrrlrlrr@{}}
+\toprule
+userId & movieId & rating & title & release\_year & genres & rate\_year
+& movieage\_at\_rating\tabularnewline
+\midrule
+\endhead
+1 & 122 & 5 & Boomerang & 1992 & Comedy\textbar Romance & 1996 &
+4\tabularnewline
+1 & 185 & 5 & Net, The & 1995 & Action\textbar Crime\textbar Thriller &
+1996 & 1\tabularnewline
+1 & 292 & 5 & Outbreak & 1995 &
+Action\textbar Drama\textbar Sci-Fi\textbar Thriller & 1996 &
+1\tabularnewline
+1 & 316 & 5 & Stargate & 1994 & Action\textbar Adventure\textbar Sci-Fi
+& 1996 & 2\tabularnewline
+1 & 329 & 5 & Star Trek: Generations & 1994 &
+Action\textbar Adventure\textbar Drama\textbar Sci-Fi & 1996 &
+2\tabularnewline
+1 & 355 & 5 & Flintstones, The & 1994 &
+Children\textbar Comedy\textbar Fantasy & 1996 & 2\tabularnewline
+\bottomrule
+\end{longtable}
+
+Now the relation of the rating to the year of release and year of rating
+can be visualized
+
+\includegraphics{Movielens_project_files/figure-latex/boxplot-release-year-1.pdf}
+
+The above boxplot indicates that the release year cause more variability
+in the rating than the movie genres do. Thus, the release year could be
+an indicator for the rating.
+
+\includegraphics{Movielens_project_files/figure-latex/boxplot-release-year-scatterplot-1.pdf}
+
+The lineplot shows more clearly the relationship between the average
+rating for every release year and the release year itself. Movies before
+1980 have been rated higher in average than movies after 1980.
+
+\includegraphics{Movielens_project_files/figure-latex/boxplot-movieage-1.pdf}
+
+Also the age of a movie influences how users rate that movie. The
+scatter plot underneath shows the relationship.
+
+\includegraphics{Movielens_project_files/figure-latex/movie-age-scatterplot-1.pdf}
+
+The plot shows that older movies generally get higher ratings than
+younger movies.
+
+\hypertarget{summary}{%
+\subsubsection{Summary}\label{summary}}
+
+The above data exploration of the edx dataset fraction of the 10M
+movielens dataset has shown that certain features in the dataset have an
+influence on the rating. Thus, an algorithm which takes the
+relationships between the ratings and the other features into account
+should predict unknown ratings better in comparison to using the overall
+rating average as the only predictor.
+
+\includegraphics{Movielens_project_files/figure-latex/summary-data-exploration-1.pdf}
+
+The above plot summarizes the 10M Movielens data exploration. It shows
+that the rating variability is influenced much stronger by the UserId
+and the MovieId than by genre, movieage or release year. Therefore, the
+UserId and MovieId should certainly be taken into account when
+developing a recommendation algorithm.
+
+An important side note has to be made to the above data analysis. Namely
+that only relationships between the ratings and the features explicitly
+mentioned in the dataset have been investigated. It is, however, likely
+that other unknowns features also have a strong influence on the
+ratings.
+
+\hypertarget{recommendation-algorithm-development}{%
+\subsection{Recommendation algorithm
+development}\label{recommendation-algorithm-development}}
+
+\hypertarget{strategy}{%
+\subsubsection{Strategy}\label{strategy}}
+
+The data exploration has shown that UserId and MovieId have a strong
+influence on the rating. In contrast, movieage at rating, release year
+and the genre have a smaller effect on the rating variability. Thus, in
+the first place a baseline algorithm model will be constructed, which
+takes the movie and user effect into account. In this baseline model the
+movie and user effect will be regularized to ensure that users and
+movies with few ratings do not have a too strong contribution in the
+model. The first few steps in the development of the baseline model are
+based on the instructions in the ``Recommendation Systems'' chapter of
+the text book
+(\url{https://rafalab.github.io/dsbook/large-datasets.html\#recommendation-systems}).
+
+The residuals remaining after the baseline model will be the basis for
+matrix factorization. This method has been used by the winners of the
+Netflix challenge to identify hidden patterns between movies and users.
+In general, matrix factorization tries to separate the rating matrix
+into a user embedded matrix and a movie embedded matrix. Using a
+training set, the embeddings of the user embedded and movie embedded
+matrices are learned to best represent the rating matrix again. In this
+way, effects such as movieage at rating, release year and genre
+information, as well as many other unknown features are included in the
+recommender model if not already implicitly taken into account in the
+baseline model. A more thorough description of matrix factorization can
+be found here
+(\url{https://developers.google.com/machine-learning/recommendation/collaborative/matrix}).
+There are a few r packages which can perform matrix factorization, but
+here the ``recosystem'' package
+(\url{https://cran.r-project.org/web/packages/recosystem/vignettes/introduction.html})
+was chosen due to its ease of use, reduced memory usage and the
+relatively low computational power it requires. The r recosystem package
+is a wrapper for the high-performance C++ LIMBF library which uses the
+parallel stochastic gradient descent algorithm for optimizing the user
+embedded matrix and the movie embedded matrix.
+
+The edx dataset has been split up in a training set (edx\_train\_set)
+and a test set (edx\_test\_set). The training set will be used to train
+the models during the recommendation algorithm development, while the
+test set will test these developed models. The testing will be performed
+by taking the root-mean-square error (RMSE) between the predicted
+ratings and the true ratings for the test set. The lower the RMSE, the
+better the recommender algorithm.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# RMSE function}
+\NormalTok{RMSE <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(ratings_true, ratings_predicted)\{}
+  \KeywordTok{sqrt}\NormalTok{(}\KeywordTok{mean}\NormalTok{((ratings_true }\OperatorTok{-}\StringTok{ }\NormalTok{ratings_predicted)}\OperatorTok{^}\DecValTok{2}\NormalTok{))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{model-1-average-ratings-for-each-movie}{%
+\subsubsection{Model 1: average ratings for each
+movie}\label{model-1-average-ratings-for-each-movie}}
+
+As a first model just the ratings themselves are taken into account. The
+RMSE can then be minimized by using the overall average of all ratings
+(3.51248), which yield an RMSE of 1.0606.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Model 1: average rating }
+\CommentTok{# average rating of all movies for all users to predict the rating for user u and movie i}
+\NormalTok{model_}\DecValTok{1}\NormalTok{_prediction <-}\StringTok{ }\KeywordTok{mean}\NormalTok{(edx_train_set}\OperatorTok{$}\NormalTok{rating)}
+\NormalTok{model_}\DecValTok{1}\NormalTok{_prediction}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 3.51248
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{model_}\DecValTok{1}\NormalTok{_RMSE <-}\StringTok{ }\KeywordTok{RMSE}\NormalTok{(edx_test_set}\OperatorTok{$}\NormalTok{rating, model_}\DecValTok{1}\NormalTok{_prediction)}
+\NormalTok{model_}\DecValTok{1}\NormalTok{_RMSE}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 1.060635
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{all_RMSEs <-}\StringTok{ }\KeywordTok{data_frame}\NormalTok{(}\DataTypeTok{method =} \StringTok{"Model 1 : overall average"}\NormalTok{, }\DataTypeTok{RMSE =}\NormalTok{ model_}\DecValTok{1}\NormalTok{_RMSE)}
+\NormalTok{all_RMSEs }\OperatorTok{%>%}\StringTok{ }\NormalTok{knitr}\OperatorTok{::}\KeywordTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lr@{}}
+\toprule
+method & RMSE\tabularnewline
+\midrule
+\endhead
+Model 1 : overall average & 1.060635\tabularnewline
+\bottomrule
+\end{longtable}
+
+\hypertarget{model-2-modeling-the-movie-effect-by-adding-a-movie-bias-m_bias}{%
+\subsubsection{Model 2: modeling the movie effect by adding a movie bias
+(m\_bias)}\label{model-2-modeling-the-movie-effect-by-adding-a-movie-bias-m_bias}}
+
+The characteristics of a movie have a certain influence on the ratings
+of that movie. In the recommendation model the movie effect can be taken
+into account by adding a bias for each movie (m\_bias). This bias
+corresponds to the difference between the average rating of that
+specific movie to the overall average rating of all movies.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Model 2: average rating + movie bias}
+\CommentTok{# inclusion of a movie bias (m_bias) since movies can in average be rated higher or lower than the overall average}
+\NormalTok{avg_rating <-}\StringTok{ }\KeywordTok{mean}\NormalTok{(edx_train_set}\OperatorTok{$}\NormalTok{rating)}
+
+\NormalTok{movie_avgs <-}\StringTok{ }\NormalTok{edx_train_set }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(movieId) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{m_bias =} \KeywordTok{mean}\NormalTok{(rating }\OperatorTok{-}\StringTok{ }\NormalTok{avg_rating))}
+
+\NormalTok{model_}\DecValTok{2}\NormalTok{_prediction <-}\StringTok{ }\NormalTok{avg_rating }\OperatorTok{+}\StringTok{ }\NormalTok{edx_test_set }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(movie_avgs, }\DataTypeTok{by=}\StringTok{'movieId'}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\NormalTok{.}\OperatorTok{$}\NormalTok{m_bias}
+
+\NormalTok{model_}\DecValTok{2}\NormalTok{_RMSE <-}\StringTok{ }\KeywordTok{RMSE}\NormalTok{(model_}\DecValTok{2}\NormalTok{_prediction, edx_test_set}\OperatorTok{$}\NormalTok{rating)}
+\NormalTok{all_RMSEs <-}\StringTok{ }\KeywordTok{bind_rows}\NormalTok{(all_RMSEs,}
+                          \KeywordTok{data_frame}\NormalTok{(}\DataTypeTok{method=}\StringTok{"Model 2: movie bias"}\NormalTok{,}
+                                     \DataTypeTok{RMSE =}\NormalTok{ model_}\DecValTok{2}\NormalTok{_RMSE))}
+\NormalTok{all_RMSEs }\OperatorTok{%>%}\StringTok{ }\NormalTok{knitr}\OperatorTok{::}\KeywordTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lr@{}}
+\toprule
+method & RMSE\tabularnewline
+\midrule
+\endhead
+Model 1 : overall average & 1.0606351\tabularnewline
+Model 2: movie bias & 0.9440709\tabularnewline
+\bottomrule
+\end{longtable}
+
+\hypertarget{model-3-modeling-the-user-effect-by-adding-a-user-bias-in-addition-to-the-movie-bias-m_bias-u_bias}{%
+\subsubsection{Model 3: modeling the user effect by adding a user bias
+in addition to the movie bias (m\_bias +
+u\_bias)}\label{model-3-modeling-the-user-effect-by-adding-a-user-bias-in-addition-to-the-movie-bias-m_bias-u_bias}}
+
+The characteristics of a user can also influence the rating of a
+particular movie. There are for example optimistic users who like to
+give higher scores in comparison to other users. The user effect is
+accommodated by including a user bias (u\_bias) to model 2.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Model 3: average rating + movie bias + user bias}
+\CommentTok{# inclusion of a user bias (u_bias) since users can in average rate movies higher or lower than the overall average}
+\NormalTok{avg_rating <-}\StringTok{ }\KeywordTok{mean}\NormalTok{(edx_train_set}\OperatorTok{$}\NormalTok{rating)}
+
+\NormalTok{user_avgs <-}\StringTok{ }\NormalTok{edx_train_set }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(movie_avgs, }\DataTypeTok{by=}\StringTok{'movieId'}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(userId) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{u_bias =} \KeywordTok{mean}\NormalTok{(rating }\OperatorTok{-}\StringTok{ }\NormalTok{avg_rating }\OperatorTok{-}\StringTok{ }\NormalTok{m_bias))}
+
+\NormalTok{model_}\DecValTok{3}\NormalTok{_prediction <-}\StringTok{ }\NormalTok{edx_test_set }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(movie_avgs, }\DataTypeTok{by=}\StringTok{'movieId'}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(user_avgs, }\DataTypeTok{by=}\StringTok{'userId'}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{prediction =}\NormalTok{ avg_rating }\OperatorTok{+}\StringTok{ }\NormalTok{m_bias }\OperatorTok{+}\StringTok{ }\NormalTok{u_bias) }\OperatorTok{%>%}
+\StringTok{  }\NormalTok{.}\OperatorTok{$}\NormalTok{prediction}
+  
+
+\NormalTok{model_}\DecValTok{3}\NormalTok{_RMSE <-}\StringTok{ }\KeywordTok{RMSE}\NormalTok{(model_}\DecValTok{3}\NormalTok{_prediction, edx_test_set}\OperatorTok{$}\NormalTok{rating)}
+
+\NormalTok{all_RMSEs <-}\StringTok{ }\KeywordTok{bind_rows}\NormalTok{(all_RMSEs,}
+                       \KeywordTok{data_frame}\NormalTok{(}\DataTypeTok{method=}\StringTok{"Model 3: movie bias + user bias"}\NormalTok{,}
+                                  \DataTypeTok{RMSE =}\NormalTok{ model_}\DecValTok{3}\NormalTok{_RMSE))}
+\NormalTok{all_RMSEs }\OperatorTok{%>%}\StringTok{ }\NormalTok{knitr}\OperatorTok{::}\KeywordTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lr@{}}
+\toprule
+method & RMSE\tabularnewline
+\midrule
+\endhead
+Model 1 : overall average & 1.0606351\tabularnewline
+Model 2: movie bias & 0.9440709\tabularnewline
+Model 3: movie bias + user bias & 0.8664802\tabularnewline
+\bottomrule
+\end{longtable}
+
+\hypertarget{model-4-modeling-the-movie-effect-by-regularizing-the-movie-bias-m_bias-using-a-parameter-lambda-m_lambda}{%
+\subsubsection{Model 4: modeling the movie effect by regularizing the
+movie bias (m\_bias) using a parameter lambda
+(m\_lambda)}\label{model-4-modeling-the-movie-effect-by-regularizing-the-movie-bias-m_bias-using-a-parameter-lambda-m_lambda}}
+
+Preliminary data exploration has shown tha many obscure movies were only
+rated one or a few times. This led to obscure movies being very highly
+or very lowly rated in average. However, one or a few ratings are
+generally not sufficient to confidently predict future ratings.
+
+If such small sample sizes are not taken into account, the
+recommendation algorithm can become overtrained. Small sample sizes can
+be accounted for by adding a penalty to the movie bias estimates, which
+increases with smaller sample sizes. This method is called
+regularization.
+
+How the penalty should vary with the sample size can be modeled using
+the parameter lambda (m\_lambda). In model 4 depicted below a sequence
+of lambdas is tested to verify which lambda results in the lowest RMSE.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Model 4: average rating + regularized movie bias }
+\CommentTok{# inclusion of a regularized movie bias (reg_m_bias) to account for movies which were not rated often}
+
+\CommentTok{# Optimize the lambda parameter in the regularization formula}
+\NormalTok{lambdas <-}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{, }\FloatTok{0.25}\NormalTok{)}
+\NormalTok{avg_rating <-}\StringTok{ }\KeywordTok{mean}\NormalTok{(edx_train_set}\OperatorTok{$}\NormalTok{rating)}
+\NormalTok{sum_rating_minus_avg <-}\StringTok{ }\NormalTok{edx_train_set }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(movieId) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{s =} \KeywordTok{sum}\NormalTok{(rating }\OperatorTok{-}\StringTok{ }\NormalTok{avg_rating), }\DataTypeTok{n_i =} \KeywordTok{n}\NormalTok{())}
+
+\NormalTok{RMSEs <-}\StringTok{ }\KeywordTok{sapply}\NormalTok{(lambdas, }\ControlFlowTok{function}\NormalTok{(l)\{}
+\NormalTok{  predicted_ratings <-}\StringTok{ }\NormalTok{edx_test_set }\OperatorTok{%>%}\StringTok{ }
+\StringTok{    }\KeywordTok{left_join}\NormalTok{(sum_rating_minus_avg, }\DataTypeTok{by=}\StringTok{'movieId'}\NormalTok{) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{    }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{m_bias =}\NormalTok{ s}\OperatorTok{/}\NormalTok{(n_i}\OperatorTok{+}\NormalTok{l)) }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{prediction =}\NormalTok{ avg_rating }\OperatorTok{+}\StringTok{ }\NormalTok{m_bias) }\OperatorTok{%>%}
+\StringTok{    }\NormalTok{.}\OperatorTok{$}\NormalTok{pred}
+  \KeywordTok{return}\NormalTok{(}\KeywordTok{RMSE}\NormalTok{(predicted_ratings, edx_test_set}\OperatorTok{$}\NormalTok{rating))}
+\NormalTok{\})}
+\KeywordTok{qplot}\NormalTok{(lambdas, RMSEs)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Movielens_project_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{m_lambda <-}\StringTok{ }\NormalTok{lambdas[}\KeywordTok{which.min}\NormalTok{(RMSEs)]}
+
+\NormalTok{m_lambda}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 1.75
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{all_RMSEs <-}\StringTok{ }\KeywordTok{bind_rows}\NormalTok{(all_RMSEs,}
+                       \KeywordTok{data_frame}\NormalTok{(}\DataTypeTok{method=}\StringTok{"Model 4: regularized movie bias"}\NormalTok{,}
+                                  \DataTypeTok{RMSE =} \KeywordTok{min}\NormalTok{(RMSEs)))}
+\NormalTok{all_RMSEs }\OperatorTok{%>%}\StringTok{ }\NormalTok{knitr}\OperatorTok{::}\KeywordTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lr@{}}
+\toprule
+method & RMSE\tabularnewline
+\midrule
+\endhead
+Model 1 : overall average & 1.0606351\tabularnewline
+Model 2: movie bias & 0.9440709\tabularnewline
+Model 3: movie bias + user bias & 0.8664802\tabularnewline
+Model 4: regularized movie bias & 0.9440293\tabularnewline
+\bottomrule
+\end{longtable}
+
+\hypertarget{model-5-modeling-the-user-effect-by-regularizing-the-user-bias-u_bias-using-a-parameter-lambda-u_lambda}{%
+\subsubsection{Model 5: modeling the user effect by regularizing the
+user bias (u\_bias) using a parameter lambda
+(u\_lambda)}\label{model-5-modeling-the-user-effect-by-regularizing-the-user-bias-u_bias-using-a-parameter-lambda-u_lambda}}
+
+Regularization can be applied as well to the user bias in a similar way
+to the movie bias. Indeed, a user who has rated a few movies very
+highly, will not necessarily rate every movie very highly. He may still
+rate movies in average highly but this cannot be derived with high
+certainty from the small sample of movies the user has rated.
+
+The lambda parameter was here also used to optimize the penalty to the
+user bias. The optimized lambda for the user effect is denoted as
+u\_lambda.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Model 5: regularized user bias}
+\CommentTok{#Include a regularized user bias to lower the importance of the user bias for users who did not yet rate a lot of movies}
+
+\CommentTok{#Optimize the lambda parameter in the regularization formula}
+\NormalTok{lambdas <-}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{, }\FloatTok{0.25}\NormalTok{)}
+\NormalTok{avg_rating <-}\StringTok{ }\KeywordTok{mean}\NormalTok{(edx_train_set}\OperatorTok{$}\NormalTok{rating)}
+\NormalTok{sum_rating_minus_avg <-}\StringTok{ }\NormalTok{edx_train_set }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(userId) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{s =} \KeywordTok{sum}\NormalTok{(rating }\OperatorTok{-}\StringTok{ }\NormalTok{avg_rating), }\DataTypeTok{n_i =} \KeywordTok{n}\NormalTok{())}
+
+\NormalTok{RMSEs <-}\StringTok{ }\KeywordTok{sapply}\NormalTok{(lambdas, }\ControlFlowTok{function}\NormalTok{(l)\{}
+\NormalTok{  predicted_ratings <-}\StringTok{ }\NormalTok{edx_test_set }\OperatorTok{%>%}\StringTok{ }
+\StringTok{    }\KeywordTok{left_join}\NormalTok{(sum_rating_minus_avg, }\DataTypeTok{by=}\StringTok{'userId'}\NormalTok{) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{    }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{u_bias =}\NormalTok{ s}\OperatorTok{/}\NormalTok{(n_i}\OperatorTok{+}\NormalTok{l)) }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{prediction =}\NormalTok{ avg_rating }\OperatorTok{+}\StringTok{ }\NormalTok{u_bias) }\OperatorTok{%>%}
+\StringTok{    }\NormalTok{.}\OperatorTok{$}\NormalTok{pred}
+  \KeywordTok{return}\NormalTok{(}\KeywordTok{RMSE}\NormalTok{(predicted_ratings, edx_test_set}\OperatorTok{$}\NormalTok{rating))}
+\NormalTok{\})}
+\KeywordTok{qplot}\NormalTok{(lambdas, RMSEs)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Movielens_project_files/figure-latex/unnamed-chunk-6-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{u_lambda <-}\StringTok{ }\NormalTok{lambdas[}\KeywordTok{which.min}\NormalTok{(RMSEs)]}
+
+\NormalTok{u_lambda}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 5.5
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{all_RMSEs <-}\StringTok{ }\KeywordTok{bind_rows}\NormalTok{(all_RMSEs,}
+                       \KeywordTok{data_frame}\NormalTok{(}\DataTypeTok{method=}\StringTok{"Model 5: regularized user bias"}\NormalTok{,}
+                                  \DataTypeTok{RMSE =} \KeywordTok{min}\NormalTok{(RMSEs)))}
+\NormalTok{all_RMSEs }\OperatorTok{%>%}\StringTok{ }\NormalTok{knitr}\OperatorTok{::}\KeywordTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lr@{}}
+\toprule
+method & RMSE\tabularnewline
+\midrule
+\endhead
+Model 1 : overall average & 1.0606351\tabularnewline
+Model 2: movie bias & 0.9440709\tabularnewline
+Model 3: movie bias + user bias & 0.8664802\tabularnewline
+Model 4: regularized movie bias & 0.9440293\tabularnewline
+Model 5: regularized user bias & 0.9785199\tabularnewline
+\bottomrule
+\end{longtable}
+
+\hypertarget{model-6-modeling-movie-effect-and-user-effect-using-the-regularized-biases-and-lambdas-from-the-previous-models}{%
+\subsubsection{Model 6: modeling movie effect and user effect using the
+regularized biases and lambdas from the previous
+models}\label{model-6-modeling-movie-effect-and-user-effect-using-the-regularized-biases-and-lambdas-from-the-previous-models}}
+
+In model 6, model 4 and 5 are combined so that a regularized bias for
+the movie and user effect is used. The lambdas optimized in each model
+are being used: 5.5 for the movie bias and 1.75 for the user bias.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Model 6: regularized movie bias + user bias}
+\CommentTok{#Now include both a regularized user bias with lambda 5.5 and a regularized movie bias with lambda 1.75}
+\NormalTok{u_lambda <-}\StringTok{ }\FloatTok{5.5}
+\NormalTok{m_lambda <-}\StringTok{ }\FloatTok{1.75}
+
+\NormalTok{avg_rating <-}\StringTok{ }\KeywordTok{mean}\NormalTok{(edx_train_set}\OperatorTok{$}\NormalTok{rating)}
+
+\CommentTok{# regularized movie bias based on the lambda calculated in model 4}
+\NormalTok{reg_movie_bias <-}\StringTok{ }\NormalTok{edx_train_set }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(movieId) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{reg_m_bias =}\NormalTok{ (}\KeywordTok{sum}\NormalTok{(rating }\OperatorTok{-}\StringTok{ }\NormalTok{avg_rating))}\OperatorTok{/}\NormalTok{(}\KeywordTok{n}\NormalTok{()}\OperatorTok{+}\NormalTok{m_lambda))}
+
+\CommentTok{# regularized user bias based on the lambda calculated in model 5}
+\NormalTok{reg_user_bias <-}\StringTok{ }\NormalTok{edx_train_set }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(reg_movie_bias, }\DataTypeTok{by=}\StringTok{'movieId'}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(userId) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{reg_u_bias =}\NormalTok{ (}\KeywordTok{sum}\NormalTok{(rating }\OperatorTok{-}\StringTok{ }\NormalTok{avg_rating }\OperatorTok{-}\StringTok{ }\NormalTok{reg_m_bias))}\OperatorTok{/}\NormalTok{(}\KeywordTok{n}\NormalTok{()}\OperatorTok{+}\NormalTok{u_lambda))}
+ 
+\NormalTok{model_}\DecValTok{6}\NormalTok{_prediction <-}\StringTok{ }\NormalTok{edx_test_set }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(reg_movie_bias, }\DataTypeTok{by=}\StringTok{'movieId'}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(reg_user_bias, }\DataTypeTok{by=}\StringTok{'userId'}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{prediction =}\NormalTok{ avg_rating }\OperatorTok{+}\StringTok{ }\NormalTok{reg_m_bias }\OperatorTok{+}\StringTok{ }\NormalTok{reg_u_bias) }\OperatorTok{%>%}
+\StringTok{  }\NormalTok{.}\OperatorTok{$}\NormalTok{prediction}
+
+\NormalTok{model_}\DecValTok{6}\NormalTok{_RMSE <-}\StringTok{ }\KeywordTok{RMSE}\NormalTok{(model_}\DecValTok{6}\NormalTok{_prediction, edx_test_set}\OperatorTok{$}\NormalTok{rating)}
+
+\NormalTok{all_RMSEs <-}\StringTok{ }\KeywordTok{bind_rows}\NormalTok{(all_RMSEs,}
+                       \KeywordTok{data_frame}\NormalTok{(}\DataTypeTok{method=}\StringTok{"Model 6: regularized movie bias + regularized user bias"}\NormalTok{,}
+                                  \DataTypeTok{RMSE =}\NormalTok{ model_}\DecValTok{6}\NormalTok{_RMSE))}
+\NormalTok{all_RMSEs }\OperatorTok{%>%}\StringTok{ }\NormalTok{knitr}\OperatorTok{::}\KeywordTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lr@{}}
+\toprule
+method & RMSE\tabularnewline
+\midrule
+\endhead
+Model 1 : overall average & 1.0606351\tabularnewline
+Model 2: movie bias & 0.9440709\tabularnewline
+Model 3: movie bias + user bias & 0.8664802\tabularnewline
+Model 4: regularized movie bias & 0.9440293\tabularnewline
+Model 5: regularized user bias & 0.9785199\tabularnewline
+Model 6: regularized movie bias + regularized user bias &
+0.8658766\tabularnewline
+\bottomrule
+\end{longtable}
+
+\hypertarget{model-7-modeling-movie-effect-and-user-effect-using-regularized-biases-by-optimizing-lambda-simultaneously-for-both-effects.}{%
+\subsubsection{Model 7: modeling movie effect and user effect using
+regularized biases by optimizing lambda simultaneously for both
+effects.}\label{model-7-modeling-movie-effect-and-user-effect-using-regularized-biases-by-optimizing-lambda-simultaneously-for-both-effects.}}
+
+In model 7 the same lambda will be used for regularizing both the movie
+and user effect.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Model 7: regularized movie bias + user bias 2}
+\CommentTok{# In the second type the lambda is simultaneously optimized for the movie bias and the user bias}
+
+\CommentTok{# First optimize the lambda}
+\NormalTok{avg_rating <-}\StringTok{ }\KeywordTok{mean}\NormalTok{(edx_train_set}\OperatorTok{$}\NormalTok{rating)}
+\NormalTok{lambdas <-}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{, }\FloatTok{0.25}\NormalTok{)}
+
+\NormalTok{RMSEs <-}\StringTok{ }\KeywordTok{sapply}\NormalTok{(lambdas, }\ControlFlowTok{function}\NormalTok{(um_lambda)\{}
+\NormalTok{  reg_movie_bias <-}\StringTok{ }\NormalTok{edx_train_set }\OperatorTok{%>%}\StringTok{ }
+\StringTok{    }\KeywordTok{group_by}\NormalTok{(movieId) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{    }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{reg_m_bias =}\NormalTok{ (}\KeywordTok{sum}\NormalTok{(rating }\OperatorTok{-}\StringTok{ }\NormalTok{avg_rating))}\OperatorTok{/}\NormalTok{(}\KeywordTok{n}\NormalTok{()}\OperatorTok{+}\NormalTok{um_lambda))}
+\NormalTok{  reg_user_bias <-}\StringTok{ }\NormalTok{edx_train_set }\OperatorTok{%>%}\StringTok{ }
+\StringTok{    }\KeywordTok{left_join}\NormalTok{(reg_movie_bias, }\DataTypeTok{by=}\StringTok{'movieId'}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{group_by}\NormalTok{(userId) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{    }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{reg_u_bias =}\NormalTok{ (}\KeywordTok{sum}\NormalTok{(rating }\OperatorTok{-}\StringTok{ }\NormalTok{avg_rating }\OperatorTok{-}\StringTok{ }\NormalTok{reg_m_bias))}\OperatorTok{/}\NormalTok{(}\KeywordTok{n}\NormalTok{()}\OperatorTok{+}\NormalTok{um_lambda))}
+\NormalTok{  predicted_ratings <-}\StringTok{ }\NormalTok{edx_test_set }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{left_join}\NormalTok{(reg_movie_bias, }\DataTypeTok{by=}\StringTok{'movieId'}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{left_join}\NormalTok{(reg_user_bias, }\DataTypeTok{by=}\StringTok{'userId'}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{prediction =}\NormalTok{ avg_rating }\OperatorTok{+}\StringTok{ }\NormalTok{reg_m_bias }\OperatorTok{+}\StringTok{ }\NormalTok{reg_u_bias) }\OperatorTok{%>%}
+\StringTok{    }\NormalTok{.}\OperatorTok{$}\NormalTok{prediction}
+  \KeywordTok{return}\NormalTok{(}\KeywordTok{RMSE}\NormalTok{(predicted_ratings, edx_test_set}\OperatorTok{$}\NormalTok{rating))}
+\NormalTok{\})}
+
+\KeywordTok{qplot}\NormalTok{(lambdas, RMSEs)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Movielens_project_files/figure-latex/unnamed-chunk-8-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{um_lambda <-}\StringTok{ }\NormalTok{lambdas[}\KeywordTok{which.min}\NormalTok{(RMSEs)]}
+\NormalTok{um_lambda}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 4.75
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{model_}\DecValTok{7}\NormalTok{_RMSE <-}\StringTok{ }\KeywordTok{min}\NormalTok{(RMSEs)}
+\NormalTok{all_RMSEs <-}\StringTok{ }\KeywordTok{bind_rows}\NormalTok{(all_RMSEs,}
+                       \KeywordTok{data_frame}\NormalTok{(}\DataTypeTok{method=}\StringTok{"Model 7: regularized movie bias + regularized user bias 2"}\NormalTok{,}
+                                  \DataTypeTok{RMSE =}\NormalTok{ model_}\DecValTok{7}\NormalTok{_RMSE))}
+\NormalTok{all_RMSEs }\OperatorTok{%>%}\StringTok{ }\NormalTok{knitr}\OperatorTok{::}\KeywordTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lr@{}}
+\toprule
+method & RMSE\tabularnewline
+\midrule
+\endhead
+Model 1 : overall average & 1.0606351\tabularnewline
+Model 2: movie bias & 0.9440709\tabularnewline
+Model 3: movie bias + user bias & 0.8664802\tabularnewline
+Model 4: regularized movie bias & 0.9440293\tabularnewline
+Model 5: regularized user bias & 0.9785199\tabularnewline
+Model 6: regularized movie bias + regularized user bias &
+0.8658766\tabularnewline
+Model 7: regularized movie bias + regularized user bias 2 &
+0.8658479\tabularnewline
+\bottomrule
+\end{longtable}
+
+\hypertarget{model-8-matrix-factorization-on-residuals-of-model-7-baseline-model}{%
+\subsubsection{Model 8: Matrix factorization on residuals of model 7
+(baseline
+model)}\label{model-8-matrix-factorization-on-residuals-of-model-7-baseline-model}}
+
+Since model 7 exhibited the lowest RMSE the residuals from that model
+were used for matrix factorization. The residuals are obtained after
+subtracting the average rating, movie bias and user bias from each
+rating.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Model 8: Matrix factorization}
+\CommentTok{# To further enhance the recommendation the residuals have to be modeled using matrix factorization,}
+\CommentTok{# The matrix factorization will be performed using the recosystem package }
+\CommentTok{# Model 7 will be used as baseline system to calculate the residuals }
+
+\CommentTok{# Obtain the residuals using the lambda of model 7}
+\NormalTok{um_lambda <-}\StringTok{ }\FloatTok{4.75}
+\NormalTok{avg_rating <-}\StringTok{ }\KeywordTok{mean}\NormalTok{(edx_train_set}\OperatorTok{$}\NormalTok{rating)}
+
+\NormalTok{reg_movie_bias <-}\StringTok{ }\NormalTok{edx_train_set }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(movieId) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{reg_m_bias =}\NormalTok{ (}\KeywordTok{sum}\NormalTok{(rating }\OperatorTok{-}\StringTok{ }\NormalTok{avg_rating))}\OperatorTok{/}\NormalTok{(}\KeywordTok{n}\NormalTok{()}\OperatorTok{+}\NormalTok{um_lambda))}
+\NormalTok{reg_user_bias <-}\StringTok{ }\NormalTok{edx_train_set }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(reg_movie_bias, }\DataTypeTok{by=}\StringTok{'movieId'}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(userId) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{reg_u_bias =}\NormalTok{ (}\KeywordTok{sum}\NormalTok{(rating }\OperatorTok{-}\StringTok{ }\NormalTok{avg_rating }\OperatorTok{-}\StringTok{ }\NormalTok{reg_m_bias))}\OperatorTok{/}\NormalTok{(}\KeywordTok{n}\NormalTok{()}\OperatorTok{+}\NormalTok{um_lambda))}
+
+\NormalTok{predicted_ratings_m7 <-}\StringTok{ }
+\StringTok{  }\NormalTok{edx_test_set }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(reg_movie_bias, }\DataTypeTok{by =} \StringTok{"movieId"}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(reg_user_bias, }\DataTypeTok{by =} \StringTok{"userId"}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{pred =}\NormalTok{ avg_rating }\OperatorTok{+}\StringTok{ }\NormalTok{reg_m_bias }\OperatorTok{+}\StringTok{ }\NormalTok{reg_u_bias)}\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{pull}\NormalTok{(pred) }
+
+\NormalTok{residuals_train_set <-}\StringTok{ }\NormalTok{edx_train_set }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(reg_movie_bias, }\DataTypeTok{by =} \StringTok{"movieId"}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(reg_user_bias, }\DataTypeTok{by =} \StringTok{"userId"}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{residual =}\NormalTok{ rating }\OperatorTok{-}\StringTok{ }\NormalTok{avg_rating }\OperatorTok{-}\StringTok{ }\NormalTok{reg_m_bias }\OperatorTok{-}\StringTok{ }\NormalTok{reg_u_bias) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{select}\NormalTok{(userId, movieId, residual)}
+\KeywordTok{head}\NormalTok{(residuals_train_set)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   userId movieId   residual
+## 1      1     185  0.6167235
+## 2      1     292  0.3273172
+## 3      1     316  0.3990895
+## 4      1     329  0.4071122
+## 5      1     356 -0.2640140
+## 6      1     362  0.3091414
+\end{verbatim}
+
+These residuals are the basis for matrix factorization. For the
+recosystem package both edx training and test set need to be transformed
+into three-column matrices with users, movies and residuals/ratings as
+column identifiers. These matrices are then temporarily written onto the
+hard disk, using less RAM memory. Then, the Reco() function in the
+recosystem package will be used to built a recommender object of which a
+set of parameters will be trained using the edx training matrix.
+
+Using the optimized parameters and test data a prediction model is made.
+The prediction is made with the base prediction of model 7 and the
+residuals predicted here. Finally, an RMSE is calculated.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Use recosystem package to perform matrix factorization}
+\KeywordTok{install.packages}\NormalTok{(}\StringTok{"recosystem"}\NormalTok{)}
+\KeywordTok{library}\NormalTok{(recosystem)}
+\NormalTok{matrix_train_residuals <-}\StringTok{ }\NormalTok{residuals_train_set }\OperatorTok{%>%}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{() }
+\NormalTok{matrix_test <-}\StringTok{ }\NormalTok{edx_test_set }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{select}\NormalTok{(userId, movieId, rating) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{as.matrix}\NormalTok{()}
+
+\CommentTok{# write the matrices on disk and assign them to a variable}
+\KeywordTok{write.table}\NormalTok{(matrix_train_residuals , }\DataTypeTok{file =} \StringTok{"matrixtrainresiduals.txt"}\NormalTok{ , }\DataTypeTok{sep =} \StringTok{" "}\NormalTok{ , }\DataTypeTok{row.names =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{col.names =} \OtherTok{FALSE}\NormalTok{)}
+\KeywordTok{write.table}\NormalTok{(matrix_test, }\DataTypeTok{file =} \StringTok{"matrix_test.txt"}\NormalTok{ , }\DataTypeTok{sep =} \StringTok{" "}\NormalTok{ , }\DataTypeTok{row.names =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{col.names =} \OtherTok{FALSE}\NormalTok{)}
+
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{1992}\NormalTok{, }\DataTypeTok{sample.kind =} \StringTok{"Rounding"}\NormalTok{) }
+\NormalTok{trainset <-}\StringTok{ }\KeywordTok{data_file}\NormalTok{(}\StringTok{"matrixtrainresiduals.txt"}\NormalTok{)}
+\NormalTok{testset <-}\StringTok{ }\KeywordTok{data_file}\NormalTok{(}\StringTok{"matrix_test.txt"}\NormalTok{)}
+
+\CommentTok{# make a recommender object}
+\NormalTok{recommender <-}\KeywordTok{Reco}\NormalTok{()}
+
+\CommentTok{# tuning the recommender with the training data}
+\NormalTok{opts <-}\StringTok{ }\NormalTok{recommender}\OperatorTok{$}\KeywordTok{tune}\NormalTok{(trainset, }\DataTypeTok{opts =} \KeywordTok{list}\NormalTok{(}\DataTypeTok{dim =} \KeywordTok{c}\NormalTok{(}\DecValTok{10}\NormalTok{, }\DecValTok{20}\NormalTok{, }\DecValTok{30}\NormalTok{), }\DataTypeTok{lrate =} \KeywordTok{c}\NormalTok{(}\FloatTok{0.1}\NormalTok{, }\FloatTok{0.2}\NormalTok{),}
+                                      \DataTypeTok{costp_l1 =} \DecValTok{0}\NormalTok{, }\DataTypeTok{costq_l1 =} \DecValTok{0}\NormalTok{,}
+                                      \DataTypeTok{nthread =} \DecValTok{1}\NormalTok{, }\DataTypeTok{niter =} \DecValTok{10}\NormalTok{))}
+\NormalTok{opts}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## $min
+## $min$dim
+## [1] 30
+## 
+## $min$costp_l1
+## [1] 0
+## 
+## $min$costp_l2
+## [1] 0.01
+## 
+## $min$costq_l1
+## [1] 0
+## 
+## $min$costq_l2
+## [1] 0.1
+## 
+## $min$lrate
+## [1] 0.1
+## 
+## $min$loss_fun
+## [1] 0.8012723
+## 
+## 
+## $res
+##    dim costp_l1 costp_l2 costq_l1 costq_l2 lrate  loss_fun
+## 1   10        0     0.01        0     0.01   0.1 0.8177840
+## 2   20        0     0.01        0     0.01   0.1 0.8283626
+## 3   30        0     0.01        0     0.01   0.1 0.8385643
+## 4   10        0     0.10        0     0.01   0.1 0.8127029
+## 5   20        0     0.10        0     0.01   0.1 0.8133243
+## 6   30        0     0.10        0     0.01   0.1 0.8157175
+## 7   10        0     0.01        0     0.10   0.1 0.8087027
+## 8   20        0     0.01        0     0.10   0.1 0.8038228
+## 9   30        0     0.01        0     0.10   0.1 0.8012723
+## 10  10        0     0.10        0     0.10   0.1 0.8249721
+## 11  20        0     0.10        0     0.10   0.1 0.8234454
+## 12  30        0     0.10        0     0.10   0.1 0.8246958
+## 13  10        0     0.01        0     0.01   0.2 0.8244819
+## 14  20        0     0.01        0     0.01   0.2 0.8407193
+## 15  30        0     0.01        0     0.01   0.2 0.8587363
+## 16  10        0     0.10        0     0.01   0.2 0.8133382
+## 17  20        0     0.10        0     0.01   0.2 0.8201987
+## 18  30        0     0.10        0     0.01   0.2 0.8229976
+## 19  10        0     0.01        0     0.10   0.2 0.8094115
+## 20  20        0     0.01        0     0.10   0.2 0.8086058
+## 21  30        0     0.01        0     0.10   0.2 0.8103958
+## 22  10        0     0.10        0     0.10   0.2 0.8223475
+## 23  20        0     0.10        0     0.10   0.2 0.8216572
+## 24  30        0     0.10        0     0.10   0.2 0.8213752
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# training the matrix factorization model}
+
+\NormalTok{recommender}\OperatorTok{$}\KeywordTok{train}\NormalTok{(trainset, }\DataTypeTok{opts =} \KeywordTok{c}\NormalTok{(opts}\OperatorTok{$}\NormalTok{min, }\DataTypeTok{nthread =} \DecValTok{1}\NormalTok{, }\DataTypeTok{niter =} \DecValTok{20}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## iter      tr_rmse          obj
+##    0       0.8595   5.5650e+06
+##    1       0.8365   5.1695e+06
+##    2       0.8194   5.0296e+06
+##    3       0.8025   4.8963e+06
+##    4       0.7872   4.7806e+06
+##    5       0.7737   4.6833e+06
+##    6       0.7620   4.6006e+06
+##    7       0.7520   4.5319e+06
+##    8       0.7433   4.4752e+06
+##    9       0.7357   4.4254e+06
+##   10       0.7289   4.3812e+06
+##   11       0.7229   4.3452e+06
+##   12       0.7176   4.3110e+06
+##   13       0.7128   4.2832e+06
+##   14       0.7085   4.2564e+06
+##   15       0.7047   4.2336e+06
+##   16       0.7012   4.2127e+06
+##   17       0.6980   4.1945e+06
+##   18       0.6951   4.1774e+06
+##   19       0.6925   4.1620e+06
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# prediction using trained model}
+
+\NormalTok{prediction <-}\StringTok{ }\KeywordTok{tempfile}\NormalTok{()}
+\NormalTok{recommender}\OperatorTok{$}\KeywordTok{predict}\NormalTok{(testset, }\KeywordTok{out_file}\NormalTok{(prediction))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## prediction output generated at C:\Users\yanni\AppData\Local\Temp\Rtmpis4QB9\file884481942c6
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{prediction_resid_matfac <-}\StringTok{ }\KeywordTok{scan}\NormalTok{(prediction)}
+\NormalTok{prediction_ratings_matfac <-}\StringTok{ }\NormalTok{predicted_ratings_m7 }\OperatorTok{+}\StringTok{ }\NormalTok{prediction_resid_matfac}
+\NormalTok{model_}\DecValTok{8}\NormalTok{_RMSE <-}\StringTok{ }\KeywordTok{RMSE}\NormalTok{(prediction_ratings_matfac, edx_test_set}\OperatorTok{$}\NormalTok{rating)}
+\NormalTok{model_}\DecValTok{8}\NormalTok{_RMSE}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.7968553
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{all_RMSEs <-}\StringTok{ }\KeywordTok{bind_rows}\NormalTok{(all_RMSEs,}
+                       \KeywordTok{data_frame}\NormalTok{(}\DataTypeTok{method=}\StringTok{"Model 8: Matrix factorization"}\NormalTok{,}
+                                  \DataTypeTok{RMSE =}\NormalTok{ model_}\DecValTok{8}\NormalTok{_RMSE))}
+\NormalTok{all_RMSEs }\OperatorTok{%>%}\StringTok{ }\NormalTok{knitr}\OperatorTok{::}\KeywordTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lr@{}}
+\toprule
+method & RMSE\tabularnewline
+\midrule
+\endhead
+Model 1 : overall average & 1.0606351\tabularnewline
+Model 2: movie bias & 0.9440709\tabularnewline
+Model 3: movie bias + user bias & 0.8664802\tabularnewline
+Model 4: regularized movie bias & 0.9440293\tabularnewline
+Model 5: regularized user bias & 0.9785199\tabularnewline
+Model 6: regularized movie bias + regularized user bias &
+0.8658766\tabularnewline
+Model 7: regularized movie bias + regularized user bias 2 &
+0.8658479\tabularnewline
+Model 8: Matrix factorization & 0.7968553\tabularnewline
+\bottomrule
+\end{longtable}
+
+\hypertarget{final-validation-on-model-8}{%
+\subsubsection{Final validation on model
+8}\label{final-validation-on-model-8}}
+
+The RMSE of model 8 is the lowest of all models. However, the RMSE was
+calculated using the edx test set, which was also used to optimize the
+lambda in model 7. It is, however, not done in machine learning to use
+(part of) a data set for training and validation! Therefore, the
+recommendation algorithm of model 8 will be validated using the
+validation set separated from the Movielens 10M data set. This data set
+has not been used for training the algorithms and is thus perfect for
+validating model 8.
+
+For the baseline model the same steps as for the development of model 7
+are used, while for the residuals the matrix factorization method from
+model 8 is used. Here the complete edx set is used as a training set and
+the lambda derived in model 7 is used as regularization parameter for
+the movie and user effect.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{## Final validation with model 8}
+\CommentTok{# Now use complete edx set for training}
+\CommentTok{#first use model 7 for regularized user and movie bias}
+\NormalTok{avg_rating <-}\StringTok{ }\KeywordTok{mean}\NormalTok{(edx}\OperatorTok{$}\NormalTok{rating)}
+\NormalTok{lambdas <-}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{, }\FloatTok{0.25}\NormalTok{)}
+
+\NormalTok{um_lambda <-}\StringTok{ }\FloatTok{4.75}
+\NormalTok{avg_rating <-}\StringTok{ }\KeywordTok{mean}\NormalTok{(edx}\OperatorTok{$}\NormalTok{rating)}
+
+\NormalTok{reg_movie_bias_valid <-}\StringTok{ }\NormalTok{edx }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(movieId) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{reg_m_bias =}\NormalTok{ (}\KeywordTok{sum}\NormalTok{(rating }\OperatorTok{-}\StringTok{ }\NormalTok{avg_rating))}\OperatorTok{/}\NormalTok{(}\KeywordTok{n}\NormalTok{()}\OperatorTok{+}\NormalTok{um_lambda))}
+\NormalTok{reg_user_bias_valid <-}\StringTok{ }\NormalTok{edx }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(reg_movie_bias_valid, }\DataTypeTok{by=}\StringTok{'movieId'}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(userId) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{reg_u_bias =}\NormalTok{ (}\KeywordTok{sum}\NormalTok{(rating }\OperatorTok{-}\StringTok{ }\NormalTok{avg_rating }\OperatorTok{-}\StringTok{ }\NormalTok{reg_m_bias))}\OperatorTok{/}\NormalTok{(}\KeywordTok{n}\NormalTok{()}\OperatorTok{+}\NormalTok{um_lambda))}
+
+\NormalTok{predicted_ratings_validation <-}\StringTok{ }
+\StringTok{  }\NormalTok{validation }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(reg_movie_bias_valid, }\DataTypeTok{by =} \StringTok{"movieId"}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(reg_user_bias_valid, }\DataTypeTok{by =} \StringTok{"userId"}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{pred =}\NormalTok{ avg_rating }\OperatorTok{+}\StringTok{ }\NormalTok{reg_m_bias }\OperatorTok{+}\StringTok{ }\NormalTok{reg_u_bias)}\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{pull}\NormalTok{(pred) }
+
+\NormalTok{residuals_edx_set <-}\StringTok{ }\NormalTok{edx }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(reg_movie_bias_valid, }\DataTypeTok{by =} \StringTok{"movieId"}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{left_join}\NormalTok{(reg_user_bias_valid, }\DataTypeTok{by =} \StringTok{"userId"}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{residual =}\NormalTok{ rating }\OperatorTok{-}\StringTok{ }\NormalTok{avg_rating }\OperatorTok{-}\StringTok{ }\NormalTok{reg_m_bias }\OperatorTok{-}\StringTok{ }\NormalTok{reg_u_bias) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{select}\NormalTok{(userId, movieId, residual)}
+\KeywordTok{head}\NormalTok{(residuals_edx_set)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   userId movieId  residual
+## 1      1     122 0.7967788
+## 2      1     185 0.5273185
+## 3      1     292 0.2387459
+## 4      1     316 0.3070651
+## 5      1     329 0.3192734
+## 6      1     355 1.1679938
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{matrix_edx_residuals <-}\StringTok{ }\NormalTok{residuals_edx_set }\OperatorTok{%>%}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{() }
+\NormalTok{matrix_validation <-}\StringTok{ }\NormalTok{validation }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{select}\NormalTok{(userId, movieId, rating) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{as.matrix}\NormalTok{()}
+
+\KeywordTok{write.table}\NormalTok{(matrix_edx_residuals , }\DataTypeTok{file =} \StringTok{"matrixedxresiduals.txt"}\NormalTok{ , }\DataTypeTok{sep =} \StringTok{" "}\NormalTok{ , }\DataTypeTok{row.names =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{col.names =} \OtherTok{FALSE}\NormalTok{)}
+\KeywordTok{write.table}\NormalTok{(matrix_validation, }\DataTypeTok{file =} \StringTok{"matrix_validation.txt"}\NormalTok{ , }\DataTypeTok{sep =} \StringTok{" "}\NormalTok{ , }\DataTypeTok{row.names =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{col.names =} \OtherTok{FALSE}\NormalTok{)}
+
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{1992}\NormalTok{, }\DataTypeTok{sample.kind =} \StringTok{"Rounding"}\NormalTok{) }
+\NormalTok{edxset <-}\StringTok{ }\KeywordTok{data_file}\NormalTok{(}\StringTok{"matrixedxresiduals.txt"}\NormalTok{)}
+\NormalTok{validationset <-}\StringTok{ }\KeywordTok{data_file}\NormalTok{(}\StringTok{"matrix_validation.txt"}\NormalTok{)}
+
+\CommentTok{# make a recommender object}
+\NormalTok{recommender_valid <-}\KeywordTok{Reco}\NormalTok{()}
+
+\CommentTok{# tuning the recommender with the training data}
+\NormalTok{opts_valid <-}\StringTok{ }\NormalTok{recommender_valid}\OperatorTok{$}\KeywordTok{tune}\NormalTok{(edxset, }\DataTypeTok{opts =} \KeywordTok{list}\NormalTok{(}\DataTypeTok{dim =} \KeywordTok{c}\NormalTok{(}\DecValTok{10}\NormalTok{, }\DecValTok{20}\NormalTok{, }\DecValTok{30}\NormalTok{), }\DataTypeTok{lrate =} \KeywordTok{c}\NormalTok{(}\FloatTok{0.1}\NormalTok{, }\FloatTok{0.2}\NormalTok{),}
+                                               \DataTypeTok{costp_l1 =} \DecValTok{0}\NormalTok{, }\DataTypeTok{costq_l1 =} \DecValTok{0}\NormalTok{,}
+                                               \DataTypeTok{nthread =} \DecValTok{1}\NormalTok{, }\DataTypeTok{niter =} \DecValTok{10}\NormalTok{))}
+\NormalTok{opts_valid}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## $min
+## $min$dim
+## [1] 30
+## 
+## $min$costp_l1
+## [1] 0
+## 
+## $min$costp_l2
+## [1] 0.01
+## 
+## $min$costq_l1
+## [1] 0
+## 
+## $min$costq_l2
+## [1] 0.1
+## 
+## $min$lrate
+## [1] 0.1
+## 
+## $min$loss_fun
+## [1] 0.7941609
+## 
+## 
+## $res
+##    dim costp_l1 costp_l2 costq_l1 costq_l2 lrate  loss_fun
+## 1   10        0     0.01        0     0.01   0.1 0.8072272
+## 2   20        0     0.01        0     0.01   0.1 0.8114371
+## 3   30        0     0.01        0     0.01   0.1 0.8200044
+## 4   10        0     0.10        0     0.01   0.1 0.8049610
+## 5   20        0     0.10        0     0.01   0.1 0.8018715
+## 6   30        0     0.10        0     0.01   0.1 0.8034186
+## 7   10        0     0.01        0     0.10   0.1 0.8038635
+## 8   20        0     0.01        0     0.10   0.1 0.7973237
+## 9   30        0     0.01        0     0.10   0.1 0.7941609
+## 10  10        0     0.10        0     0.10   0.1 0.8242639
+## 11  20        0     0.10        0     0.10   0.1 0.8235046
+## 12  30        0     0.10        0     0.10   0.1 0.8228670
+## 13  10        0     0.01        0     0.01   0.2 0.8106341
+## 14  20        0     0.01        0     0.01   0.2 0.8233611
+## 15  30        0     0.01        0     0.01   0.2 0.8368961
+## 16  10        0     0.10        0     0.01   0.2 0.8062928
+## 17  20        0     0.10        0     0.01   0.2 0.8064956
+## 18  30        0     0.10        0     0.01   0.2 0.8082813
+## 19  10        0     0.01        0     0.10   0.2 0.8034891
+## 20  20        0     0.01        0     0.10   0.2 0.7991972
+## 21  30        0     0.01        0     0.10   0.2 0.7990707
+## 22  10        0     0.10        0     0.10   0.2 0.8227886
+## 23  20        0     0.10        0     0.10   0.2 0.8215954
+## 24  30        0     0.10        0     0.10   0.2 0.8219777
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# training the matrix factorization model}
+
+\NormalTok{recommender_valid}\OperatorTok{$}\KeywordTok{train}\NormalTok{(edxset, }\DataTypeTok{opts =} \KeywordTok{c}\NormalTok{(opts_valid}\OperatorTok{$}\NormalTok{min, }\DataTypeTok{nthread =} \DecValTok{1}\NormalTok{, }\DataTypeTok{niter =} \DecValTok{20}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## iter      tr_rmse          obj
+##    0       0.8590   6.9701e+06
+##    1       0.8343   6.4465e+06
+##    2       0.8159   6.2616e+06
+##    3       0.7986   6.0910e+06
+##    4       0.7840   5.9561e+06
+##    5       0.7717   5.8478e+06
+##    6       0.7614   5.7569e+06
+##    7       0.7528   5.6832e+06
+##    8       0.7455   5.6253e+06
+##    9       0.7391   5.5727e+06
+##   10       0.7335   5.5290e+06
+##   11       0.7287   5.4934e+06
+##   12       0.7243   5.4604e+06
+##   13       0.7204   5.4312e+06
+##   14       0.7169   5.4046e+06
+##   15       0.7138   5.3828e+06
+##   16       0.7109   5.3620e+06
+##   17       0.7083   5.3433e+06
+##   18       0.7058   5.3264e+06
+##   19       0.7037   5.3123e+06
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{prediction_validation <-}\StringTok{ }\KeywordTok{tempfile}\NormalTok{()}
+\NormalTok{recommender_valid}\OperatorTok{$}\KeywordTok{predict}\NormalTok{(validationset, }\KeywordTok{out_file}\NormalTok{(prediction_validation))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## prediction output generated at C:\Users\yanni\AppData\Local\Temp\Rtmpis4QB9\file88446d0429d8
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{prediction_validation_resid <-}\StringTok{ }\KeywordTok{scan}\NormalTok{(prediction_validation)}
+\NormalTok{prediction_validation_ratings <-}\StringTok{ }\NormalTok{predicted_ratings_validation }\OperatorTok{+}\StringTok{ }\NormalTok{prediction_validation_resid}
+\NormalTok{RMSE_validation <-}\StringTok{ }\KeywordTok{RMSE}\NormalTok{(prediction_validation_ratings, validation}\OperatorTok{$}\NormalTok{rating)}
+\NormalTok{RMSE_validation}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.7865076
+\end{verbatim}
+
+\hypertarget{conclusion}{%
+\subsection{Conclusion}\label{conclusion}}
+
+This cap stone project has shown how a movie recommendation algorithm
+can be developed using data exploration and machine learning. This data
+science challenge was carried out using part of the classical MovieLens
+dataset. RMSE was used as the parameter to evaluate the different
+recommendation models. A summary of the RMSEs obtained during the
+development of the recommendation model are shown underneath.
+
+\begin{longtable}[]{@{}lr@{}}
+\toprule
+method & RMSE\tabularnewline
+\midrule
+\endhead
+Model 1 : overall average & 1.0606351\tabularnewline
+Model 2: movie bias & 0.9440709\tabularnewline
+Model 3: movie bias + user bias & 0.8664802\tabularnewline
+Model 4: regularized movie bias & 0.9440293\tabularnewline
+Model 5: regularized user bias & 0.9785199\tabularnewline
+Model 6: regularized movie bias + regularized user bias &
+0.8658766\tabularnewline
+Model 7: regularized movie bias + regularized user bias 2 &
+0.8658479\tabularnewline
+Model 8: Matrix factorization & 0.7968553\tabularnewline
+Model 8 Validation & 0.7865076\tabularnewline
+\bottomrule
+\end{longtable}
+
+The final RMSE table shows that model 8 has by far the lowest RMSE. This
+shows that matrix factorization is a very strong technique to discover
+patterns between users and movies based on a large and sparse set of
+ratings. These patterns could not be derived from purely analyzing the
+explicit information in the dataset. The final validation also confirms
+the strength of the recommendation algorithm of model 8. The baseline
+model could be further optimized by also adding a genre bias, movieage
+bias and a release year bias. In addition, using cross validation
+instead of a single test set would be more reliable for determining the
+regularization parameter.
+
+\end{document}
