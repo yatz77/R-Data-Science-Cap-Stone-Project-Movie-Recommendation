@@ -1,0 +1,838 @@
+---
+title: 'HarvardX PH125.9xData Science: Capstone: Movielens recommendation system'
+author: "Yannick Hermans"
+date: "1-10-2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(cache = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+
+## Introduction
+
+In 2006 Netflix launched a competition where participants were asked to optimize Netflix's movie recommendation system with at least 10 %. The winners were promised a prize worth $1M. The challenge was to predict user ratings as accurately as possible based on a dataset containing previous user ratings. There was no additional knowledge on the users or movies. In 2009 BellKor's Pragmatic Chaos team was able to best Netflix's movie recommendation algorithm by 10.06%
+
+In this capstone project, which forms the conclusion to the HarvardX PH125.9xData Science course, the goal is to build towards the recommendation algorithm that the winners of the Netflix challenge developed. This project will represent the knowledge I gained throughout the edX data science course on machine learning algorithms, data processing and data exploration. A reduced version of the open source MovieLens data set with 10M ratings, from 10,000 users on 72,000 movies, has been used for this data science project.
+
+This report contains the data processing steps, data exploratory analysis and a few machine learning algorithms.
+
+## Data preprocessing
+
+First the necessary packages are installed and loaded. The 10M MovieLens dataset is loaded and separated into a training ("edx") and a validation "validation" set. The code for these preprocessing steps is based on the already provided code in the edx capstone project module. https://courses.edx.org/courses/course-v1:HarvardX+PH125.9x+2T2018/courseware/dd9a048b16ca477a8f0aaf1d888f0734/e8800e37aa444297a3a2f35bf84ce452/?child=first
+
+
+``` {r, preprocessing ,eval=T}
+#########################################################
+# Create edx set, validation set (final hold_out test set)
+#########################################################
+
+# Note: this process could take a couple of minutes
+
+if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
+if(!require(data.table)) install.packages("data.table", repos = "http://cran.us.r-project.org")
+
+library(tidyverse)
+library(caret)
+library(data.table)
+
+# MovieLens 10M dataset:
+# https://grouplens.org/datasets/movielens/10m/
+# http://files.grouplens.org/datasets/movielens/ml-10m.zip
+
+dl <- tempfile()
+download.file("http://files.grouplens.org/datasets/movielens/ml-10m.zip", dl)
+ratings <- fread(text = gsub("::", "\t", readLines(unzip(dl, "ml-10M100K/ratings.dat"))),
+                 col.names = c("userId", "movieId", "rating", "timestamp"))
+
+movies <- str_split_fixed(readLines(unzip(dl, "ml-10M100K/movies.dat")), "\\::", 3)
+colnames(movies) <- c("movieId", "title", "genres")
+
+movies <- as.data.frame(movies) %>% mutate(movieId = as.numeric(movieId),
+                                           title = as.character(title),
+                                           genres = as.character(genres))
+
+movielens <- left_join(ratings, movies, by = "movieId")
+
+# Validation set will contain 10% of the MovieLens data set
+set.seed(1, sample.kind = "Rounding")
+test_index <- createDataPartition(y = movielens$rating, times = 1, p = 0.1, list = FALSE)
+edx <- movielens[-test_index,]
+temp <- movielens[test_index,]
+# Make sure userId and movieId in validation set are also in edx set
+validation <- temp %>%
+  semi_join(edx, by = "movieId") %>%
+  semi_join(edx, by = "userId")
+# Add rows removed from validation set back into edx set
+removed <- anti_join(temp, validation)
+edx <- rbind(edx, removed)
+
+rm(dl, ratings, movies, test_index, temp, movielens, removed)
+
+```
+
+The validation set is used to determine the accuracy of the final movie recommendation algorithm. The other models are tested by splitting up the edx set into a training (edx_training_set) and a test set (edx_test_set).
+
+```{r,test-and-train, eval=T, results=F}
+# Split edx data in training (80%) and test set (20%) 
+set.seed(1992, sample.kind = "Rounding")
+edx_test_index <- createDataPartition(y = edx$rating, times = 1,
+                                  p = 0.2, list = FALSE)
+edx_train_set <- edx[-edx_test_index,]
+edx_test_set <- edx[edx_test_index,]
+
+edx_test_set <- edx_test_set %>%
+  semi_join(edx_train_set, by = "movieId") %>%
+  semi_join(edx_train_set, by = "userId")
+```
+
+In addition, certain libraries for the data exploration and machine learning development are loaded
+ 
+```{r, additional-packages}
+library(lubridate)
+library(ggplot2)
+library(recosystem)
+library(knitr)
+library(gridExtra)
+```
+
+
+## Data exploratory analysis
+### Overview
+First an overview of the data is given.
+```{r, overview-edx-data, echo=TRUE, results="asis"}
+kable(head(edx))
+```
+```{r, n-observations-edx-data, echo=TRUE, results="asis"}
+# the number of observations in the Movielens data set
+length(edx$rating)+length(validation$rating)
+```
+
+The data contains 10000054 observations and is already in a tidy format, which allows for straightforward data exploration in r. In addition to a rating, additional information can be found in the dataset such as a userID, a movieID, the time at which the rating was given and the genres to which the rated movie belongs. Before analyzing how these variables relate to the rating, an overview of the rating distribution is shown below.
+
+```{r, User-rating-distribution, echo=F, results="asis"}
+# mean of ratings in the Movielens data set
+mean_rating <- mean(edx$rating)
+# rating distribution
+edx %>% ggplot(aes(x=rating)) +
+  geom_bar()+
+  ylab("Frequency")+
+  scale_x_continuous(breaks = seq(0.5, 5, 0.5)) + 
+  geom_vline(xintercept = mean_rating, colour = "blue", linetype = "dashed") +
+  ggtitle("Distribution of User Ratings") +
+  theme_bw()
+```
+
+The user ratings' distribution demonstrates that users mainly give a score of 3.0 or 4.0. In addition it is clear that users are less likely to give half point scores than whole point scores. In average users gave a score of 3.5 which is indicated by the blue dashed line. 
+
+For the development of a recommendation algorithm it would be informative to know how the additional variables in the 10M Movielens dataset relate to the ratings. This will be explored in the following.
+
+### Relation MovieId(Moviename) to user rating
+```{r, boxplot-movies, echo=F, results="asis"}
+# mean ratings per movie (boxplot)
+movie_boxplot <-edx %>% group_by(title) %>%
+  summarize(movieId= mean(movieId), mean_rating = mean(rating)) %>%
+  ggplot(aes(x=mean_rating)) +
+  geom_boxplot()+
+  ggtitle("Movies")+
+  coord_flip() +
+  scale_x_continuous(breaks = seq(0.5, 5, 0.5)) + 
+  geom_vline(xintercept = mean_rating, colour = "blue", linetype = "dashed") +
+  theme_bw()
+movie_boxplot
+```
+
+The  boxplot above shows the variability of the rating averages for each movie in the edx dataset. On first sight it seems that the movieId has a strong influence on the rating, but let's have a look at the 10 best and the 10 worst rated movies.
+
+```{r, top-10-movies, echo=F, results="asis"}
+#top 10 movies
+top_10 <- edx %>% group_by(title) %>%
+  summarize(movieId= mean(movieId), mean_rating = mean(rating)) %>%
+  arrange(desc(mean_rating)) %>%
+  top_n(10)
+kable(top_10)
+```
+
+```{r, bottom-10-movies, echo=F, results="asis"}
+#bottom 10 movies
+bottom_10 <- edx %>% group_by(title) %>%
+  summarize(movieId= mean(movieId), mean_rating = mean(rating)) %>%
+  arrange(mean_rating) %>%
+  top_n(-10)
+kable(bottom_10[seq(from = 1, to = 10), by = 1,])
+```
+
+The top 10 and bottom 10 movies are,, however, rather obscure. Furthermore, many of these movies have scores which are multiples of 0.5, indicating that only few people have rated those movies. Thus, the ratings already given for these movies will not be very predictive for how other users  may rate these movies.
+
+```{r, histogram-movies, echo=F, results="asis"}
+# histogram per movie
+edx %>% count(movieId) %>% 
+  ggplot(aes(n)) + 
+  geom_histogram(bins = 30) + 
+  scale_x_log10() + 
+  xlab("Frequency") +
+  ylab("Rating") + 
+  theme_bw()
+```
+
+
+Indeed, the histogram above shows that only few movies have more than 1000 ratings and many have less than 100 reviews. 
+
+```{r, mean-rating-vs-n-reviews-per-movie, echo=F, results="asis"}
+# plot mean rating vs number of reviews per movie
+edx %>% group_by(movieId) %>%
+  summarize(number_reviews = n(), mean_rating = mean(rating))%>%
+  ggplot(aes(x=number_reviews, y=mean_rating)) +
+  geom_point() + 
+  theme_bw()
+```
+
+How the average ratings per movie depend on the number of reviews is even better visualized in the scatter plot above. It shows that movies which have been rated often, generally have a higher mean rating. Additionally, the lower the number of ratings, the stronger the variability of the rating. After a certain number of ratings, the average rating of a movie, is likely a strong predictor for what an unknown user would rate this movie.
+
+### Relation UserId(Users) to user rating
+Now the relation between the userId and the rating will be shown.
+
+```{r, boxplot-users, echo=F, results="asis"}
+# mean ratings per user (boxplot)
+user_boxplot <- edx %>% group_by(userId) %>%
+  summarize(mean_rating = mean(rating)) %>%
+  ggplot(aes(x=mean_rating)) +
+  geom_boxplot()+
+  ggtitle("Users")+
+  coord_flip() +
+  scale_x_continuous(breaks = seq(0.5, 5, 0.5)) + 
+  geom_vline(xintercept = mean_rating, colour = "blue", linetype = "dashed") +
+  theme_bw()
+user_boxplot
+```
+
+The boxplot above resembles the one for the movie - average rating relationship. The variability here is slightly lower though, since the interquartile range is narrower. However, there are still many outliers in the lower and higher rating range. These outliers can be due to users rating every movie highly/lowly or it could be users which do not have rated many movies yet.
+
+```{r, histogram-users, echo=F, results="asis"}
+# histogram per user
+edx %>% count(userId) %>% 
+  ggplot(aes(n)) + 
+  geom_histogram(bins = 30) + 
+  scale_x_log10() + 
+  xlab("Frequency") +
+  ylab("Rating") + 
+  theme_bw()
+```
+
+
+The histogram for the number of ratings per user indeed shows that most users have rated less than 100 movies.
+Their rating will be off course less predictive than for users who predicted more than 1000 movies.
+
+```{r, mean-rating-vs-n-reviews-per-user, echo=F, results="asis"}
+# plot mean rating vs number of reviews per user
+edx %>% group_by(userId) %>%
+  summarize(number_reviews = n(), mean_rating = mean(rating))%>%
+  ggplot(aes(x=number_reviews, y=mean_rating)) +
+  geom_point() + 
+  theme_bw()
+```
+
+The relationship between a user's average rating and the number of movies the user has rated is shown above. The variability in the average rating indeed goes down with the number of reviews a user has posted. It is, however, clear that some users give generally higher scores than others, making the UserId a good predictor for the rating.
+
+### Relation Genres to user rating
+
+Another variable which is contained in the 10M movielens dataset are the genres to which a movie belongs. The genre information is, however, compacted into one string per movie. To allow for further investigation each individual genre has to be extracted from the string
+```{r, split-genre, echo=T, results="asis"}
+# number of ratings for each genre
+edx_split_genres  <- edx  %>% separate_rows(genres, sep = "\\|")
+kable(head(edx_split_genres))
+```
+
+Now the rows only contain one genre.
+
+```{r, n-ratings-for-each-genre, echo=F, results="asis"}
+
+edx_split_genres %>% group_by(genres) %>%
+  summarize(number_reviews = n()) %>%
+  ggplot(aes(x = reorder(genres, number_reviews), number_reviews)) +
+  geom_bar(stat = "identity") + coord_flip() +
+  xlab("Genres") +
+  ylab("Number of ratings for each genre") + 
+  theme_bw()
+```
+
+From the above plot one can see that particular genres were rated more often than others. This can be due to some genres being more popular than others or due to more movies having been made for that particular genre. 
+
+```{r, n-movies-for-each-genre, echo=F, results="asis"}
+# number of movies for each genre
+edx %>% group_by(movieId)%>%
+  sample_n(size=1) %>%
+  separate_rows(genres, sep = "\\|") %>%
+  group_by(genres) %>%
+  summarize(number_movies = n()) %>%
+  ggplot(aes(x = reorder(genres, number_movies), number_movies)) + 
+  geom_bar(stat = "identity") + coord_flip() +
+  xlab("Genres") +
+  ylab("Number of movies for each genre") + 
+  theme_bw()
+```
+
+The barplot above depicting the number of movies for each genre is very similar to the barplot for the number of ratings for each genre. This demonstrates that the number of reviews for a genre depends in large on how many movies have been made for that genre. To see which genres users like to rate more often, the average number of reviews per movie for each genre is shown below.
+
+```{r, n-ratings-per-movie-for-each-genre, echo=F, results="asis"}
+# number of ratings per movie for each genre
+n_movies_per_genre <- edx_split_genres %>% 
+  select(genres,movieId) %>%
+  group_by(genres) %>%
+  distinct() %>%
+  summarize(n_movies_per_genre=n())
+edx_split_genres %>%
+  group_by(genres) %>%
+  summarize(number_reviews = n()) %>%
+  left_join(n_movies_per_genre) %>%
+  mutate(n_ratings_per_movie = number_reviews/n_movies_per_genre)%>%
+  ggplot(aes(x = reorder(genres, n_ratings_per_movie), n_ratings_per_movie)) + 
+  geom_bar(stat = "identity") + coord_flip() +
+  xlab("Genres") +
+  ylab("Number of ratings per movie for each genre") + 
+  theme_bw()
+```
+
+It can be seen that users like to rate Adventure and Sci-Fi movies more often than documentaries and IMAX movies. This could be an indication that some genres are more popular than others.
+
+```{r, confidence-intervals-for-each-genre, echo=F, results="asis"}
+# confidence intervals for each genre
+edx_split_genres %>%
+  group_by(genres) %>%
+  summarize(number_reviews = n(), mean_rating = mean(rating), sd_rating = sd(rating)) %>%
+  filter(number_reviews > 8) %>%
+  ggplot(aes(x = reorder(genres, mean_rating), y = mean_rating)) +
+  geom_point() + 
+  geom_errorbar(width=.5, aes(ymin=mean_rating-1.96*sd_rating, ymax=mean_rating+1.96*sd_rating)) +
+  geom_hline(yintercept = mean_rating, colour = "blue", linetype = "dashed") +
+  coord_flip()  +
+  xlab("Genres") +
+  ylab("95% confidence interval of ratings for each genre") + 
+  theme_bw()
+```
+
+However, the plot above showing the average rating and the 95% confidence interval per genre is quite different from the previous bar plot. Thus, movies which users like to rate do not automatically yield higher average ratings. In addition, the average ratings per genre do not differ strongly from the overall rating average (blue dashed line). Thus, the genre to which a movie belongs does not influence the rating much. This is also clearly visualized in the boxplot below.
+
+
+```{r, boxplot-genres, echo=F, results="asis"}
+# mean ratings per genre (boxplot)
+genre_boxplot <- edx_split_genres %>%
+  group_by(genres) %>%
+  summarize(mean_rating = mean(rating)) %>%
+  ggplot(aes(x=mean_rating)) +
+  geom_boxplot()+
+  ggtitle("Genres")+
+  coord_flip() +
+  scale_x_continuous(breaks = seq(0.5, 5, 0.5), limits = c(0.5, 5)) + 
+  geom_vline(xintercept = mean_rating, colour = "blue", linetype = "dashed") +
+  theme_bw()
+genre_boxplot
+```
+
+### Relation time of release and age at rating to user rating
+
+The last features in the dataset are the date of release of the movie (mentioned in the title) and the timestamp of when the movie was rated. The timestamp first has to be transformed into a year of rating and the year of release has to be extracted from the title:
+
+```{r, edx-year, echo=T, results="asis"}
+edx_year <- edx %>% mutate(rate_year = year(as_datetime(timestamp)))
+edx_year <- edx_year %>% mutate(title = str_replace(title,"^(.+)\\s\\((\\d{4})\\)$","\\1__\\2" )) %>% 
+  separate(title,c("title","release_year"),"__") %>%
+  select(-timestamp) 
+edx_year <- edx_year %>% mutate(movieage_at_rating= as.numeric(rate_year)-as.numeric(release_year), release_year = as.numeric(release_year))
+kable(head(edx_year))
+```
+
+Now the relation of the rating to the year of release and year of rating can be visualized 
+ 
+```{r, boxplot-release-year, echo=F, results="asis"}
+# mean ratings per release year (boxplot)
+release_year_boxplot <- edx_year %>%
+  group_by(release_year) %>%
+  summarize(mean_rating = mean(rating)) %>%
+  ggplot(aes(x=mean_rating)) +
+  geom_boxplot()+
+  ggtitle("Release year")+
+  coord_flip() +
+  scale_x_continuous(breaks = seq(0.5, 5, 0.5), limits = c(0.5, 5))+
+  geom_vline(xintercept = mean_rating, colour = "blue", linetype = "dashed") +
+  theme_bw()
+release_year_boxplot
+```
+
+The above boxplot indicates that the release year cause more variability in the rating than the movie genres do. Thus, the release year could be an indicator for the rating.
+
+```{r, boxplot-release-year-scatterplot, echo=F, results="asis"}
+# mean ratings per release year (scatterplot)
+edx_year %>%
+  group_by(release_year) %>%
+  summarize(mean_rating = mean(rating)) %>%
+  ggplot(aes(y=mean_rating, x=release_year)) +
+  geom_point()+
+  ggtitle("Release year")+
+  scale_y_continuous(breaks = seq(0.5, 5, 0.5), limits = c(0.5, 5)) +
+  scale_x_continuous(breaks = seq(1900, 2020, by = 10))+
+  geom_hline(yintercept = mean_rating, colour = "blue", linetype = "dashed") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme_bw()
+```
+
+The lineplot shows more clearly the relationship between the average rating for every release year and the release year itself. Movies before 1980 have been rated higher in average than movies after 1980.
+
+```{r, boxplot-movieage, echo=F, results="asis"}
+movieage_boxplot <- edx_year %>%
+  group_by(movieage_at_rating) %>%
+  summarize(mean_rating = mean(rating)) %>%
+  ggplot(aes(x=mean_rating)) +
+  geom_boxplot()+
+  ggtitle("movieage")+
+  coord_flip() +
+  scale_x_continuous(breaks = seq(0.5, 5, 0.5), limits = c(0.5, 5)) + 
+  geom_vline(xintercept = mean_rating, colour = "blue", linetype = "dashed") +
+  theme_bw()
+movieage_boxplot
+```
+
+Also the age of a movie influences how users rate that movie. The scatter plot underneath shows the relationship.
+
+```{r, movie-age-scatterplot, echo=F, results="asis"}
+# mean ratings per movieage (scatterplot)
+edx_year %>%
+  group_by(movieage_at_rating) %>%
+  summarize(mean_rating = mean(rating)) %>%
+  ggplot(aes(y=mean_rating, x=movieage_at_rating)) +
+  geom_point()+
+  ggtitle("movieage_at_rating")+
+  scale_y_continuous(breaks = seq(0.5, 5, 0.5), limits = c(0.5, 5)) +
+  scale_x_continuous(breaks = seq(0, 110, by = 10))+
+  geom_hline(yintercept = mean_rating, colour = "blue", linetype = "dashed")  +
+  theme_bw()
+```
+
+The plot shows that older movies generally get higher ratings than younger movies. 
+
+### Summary
+
+The above data exploration of the edx dataset fraction of the 10M movielens dataset has shown that certain features in the dataset have an influence on the rating. Thus, an algorithm which takes the relationships between the ratings and the other features into account should predict unknown ratings better in comparison to using the overall rating average as the only predictor. 
+
+```{r, summary-data-exploration, echo=F, results="asis"}
+grid.arrange(movie_boxplot, user_boxplot, genre_boxplot, release_year_boxplot, movieage_boxplot, nrow = 1)
+```
+
+The above plot summarizes the 10M Movielens data exploration. It shows that the rating variability is influenced much stronger by the UserId and the MovieId than by genre, movieage or release year. Therefore, the UserId and MovieId should certainly be taken into account when developing a recommendation algorithm. 
+
+An important side note has to be made to the above data analysis. Namely that only relationships between the ratings and the features explicitly mentioned in the dataset have been investigated. It is, however, likely that other unknowns features also have a strong influence on the ratings. 
+
+## Recommendation algorithm development
+
+### Strategy
+The data exploration has shown that UserId and MovieId have a strong influence on the rating. In contrast, movieage at rating, release year and the genre have a smaller effect on the rating variability. Thus, in the first place a baseline algorithm model will be constructed, which takes the movie and user effect into account. In this baseline model the movie and user effect will be regularized to ensure that users and movies with few ratings do not have a too strong contribution in the model. The first few steps in the development of the baseline model are based on the instructions in the “Recommendation Systems” chapter of the text book (https://rafalab.github.io/dsbook/large-datasets.html#recommendation-systems).
+
+The residuals remaining after the baseline model will be the basis for matrix factorization. This method has been used by the winners of the Netflix challenge to identify hidden patterns between movies and users. In general, matrix factorization tries to separate the rating matrix into a user embedded matrix and a movie embedded matrix. Using a training set, the embeddings of the user embedded and movie embedded matrices are learned to best represent the rating matrix again. In this way, effects such as movieage at rating, release year and genre information, as well as many other unknown features are included in the recommender model if not already implicitly taken into account in the baseline model. A more thorough description of matrix factorization can be found here (https://developers.google.com/machine-learning/recommendation/collaborative/matrix). There are a few r packages which can perform matrix factorization, but here the "recosystem" package (https://cran.r-project.org/web/packages/recosystem/vignettes/introduction.html) was chosen due to its ease of use, reduced memory usage and the relatively low computational power it requires. The r recosystem package is a wrapper for the high-performance C++ LIMBF library which uses the parallel stochastic gradient descent algorithm for optimizing the user embedded matrix and the movie embedded matrix.
+
+The edx dataset has been split up in a training set (edx_train_set) and a test set (edx_test_set). The training set will be used to train the models during the recommendation algorithm development, while the test set will test these developed models. The testing will be performed by taking the root-mean-square error (RMSE) between the predicted ratings and the true ratings for the test set. The lower the RMSE, the better the recommender algorithm.
+
+```{r}
+# RMSE function
+RMSE <- function(ratings_true, ratings_predicted){
+  sqrt(mean((ratings_true - ratings_predicted)^2))
+}
+```
+
+### Model 1: average ratings for each movie
+As a first model just the ratings themselves are taken into account. The RMSE can then be minimized by using the overall average of all ratings (3.51248), which yield an RMSE of 1.0606.
+```{r}
+# Model 1: average rating 
+# average rating of all movies for all users to predict the rating for user u and movie i
+model_1_prediction <- mean(edx_train_set$rating)
+model_1_prediction
+
+model_1_RMSE <- RMSE(edx_test_set$rating, model_1_prediction)
+model_1_RMSE
+
+all_RMSEs <- data_frame(method = "Model 1 : overall average", RMSE = model_1_RMSE)
+all_RMSEs %>% knitr::kable()
+```
+
+### Model 2: modeling the movie effect by adding a movie bias (m_bias) 
+
+The characteristics of a movie have a certain influence on the ratings of that movie. In the recommendation model the movie effect can be taken into account by adding a bias for each movie (m_bias). This bias corresponds to the difference between the average rating of that specific movie to the overall average rating of all movies. 
+
+```{r}
+# Model 2: average rating + movie bias
+# inclusion of a movie bias (m_bias) since movies can in average be rated higher or lower than the overall average
+avg_rating <- mean(edx_train_set$rating)
+
+movie_avgs <- edx_train_set %>% 
+  group_by(movieId) %>% 
+  summarize(m_bias = mean(rating - avg_rating))
+
+model_2_prediction <- avg_rating + edx_test_set %>%
+  left_join(movie_avgs, by='movieId') %>%
+  .$m_bias
+
+model_2_RMSE <- RMSE(model_2_prediction, edx_test_set$rating)
+all_RMSEs <- bind_rows(all_RMSEs,
+                          data_frame(method="Model 2: movie bias",
+                                     RMSE = model_2_RMSE))
+all_RMSEs %>% knitr::kable()
+```
+
+### Model 3: modeling the user effect by adding a user bias in addition to the movie bias (m_bias + u_bias) 
+
+The characteristics of a user can also influence the rating of a particular movie. There are for example optimistic users who like to give higher scores in comparison to other users. The user effect is accommodated by including a user bias (u_bias) to model 2.
+
+```{r}
+# Model 3: average rating + movie bias + user bias
+# inclusion of a user bias (u_bias) since users can in average rate movies higher or lower than the overall average
+avg_rating <- mean(edx_train_set$rating)
+
+user_avgs <- edx_train_set %>% 
+  left_join(movie_avgs, by='movieId') %>%
+  group_by(userId) %>% 
+  summarize(u_bias = mean(rating - avg_rating - m_bias))
+
+model_3_prediction <- edx_test_set %>%
+  left_join(movie_avgs, by='movieId') %>%
+  left_join(user_avgs, by='userId') %>%
+  mutate(prediction = avg_rating + m_bias + u_bias) %>%
+  .$prediction
+  
+
+model_3_RMSE <- RMSE(model_3_prediction, edx_test_set$rating)
+
+all_RMSEs <- bind_rows(all_RMSEs,
+                       data_frame(method="Model 3: movie bias + user bias",
+                                  RMSE = model_3_RMSE))
+all_RMSEs %>% knitr::kable()
+```
+
+### Model 4: modeling the movie effect by regularizing the movie bias (m_bias) using a parameter lambda (m_lambda)
+
+Preliminary data exploration has shown tha many obscure movies were only rated one or a few times. This led to obscure movies being very highly or very lowly rated in average. However, one or a few ratings are generally not sufficient to confidently predict future ratings. 
+
+If such small sample sizes are not taken into account, the recommendation algorithm can become overtrained. Small sample sizes can be accounted for by adding a penalty to the movie bias estimates, which increases with smaller sample sizes. This method is called regularization. 
+
+How the penalty should vary with the sample size can be modeled using the parameter lambda (m_lambda). In model 4 depicted below a sequence of lambdas is tested to verify which lambda results in the lowest RMSE.
+
+```{r}
+# Model 4: average rating + regularized movie bias 
+# inclusion of a regularized movie bias (reg_m_bias) to account for movies which were not rated often
+
+# Optimize the lambda parameter in the regularization formula
+lambdas <- seq(0, 10, 0.25)
+avg_rating <- mean(edx_train_set$rating)
+sum_rating_minus_avg <- edx_train_set %>% 
+  group_by(movieId) %>% 
+  summarize(s = sum(rating - avg_rating), n_i = n())
+
+RMSEs <- sapply(lambdas, function(l){
+  predicted_ratings <- edx_test_set %>% 
+    left_join(sum_rating_minus_avg, by='movieId') %>% 
+    mutate(m_bias = s/(n_i+l)) %>%
+    mutate(prediction = avg_rating + m_bias) %>%
+    .$pred
+  return(RMSE(predicted_ratings, edx_test_set$rating))
+})
+qplot(lambdas, RMSEs)
+m_lambda <- lambdas[which.min(RMSEs)]
+
+m_lambda
+
+all_RMSEs <- bind_rows(all_RMSEs,
+                       data_frame(method="Model 4: regularized movie bias",
+                                  RMSE = min(RMSEs)))
+all_RMSEs %>% knitr::kable()
+
+```
+
+
+### Model 5: modeling the user effect by regularizing the user bias (u_bias) using a parameter lambda (u_lambda)
+
+Regularization can be applied as well to the user bias in a similar way to the movie bias. Indeed, a user who has rated a few movies very highly, will not necessarily rate every movie very highly. He may still rate movies in average highly but this cannot be derived with high certainty from the small sample of movies the user has rated.
+
+The lambda parameter was here also used to optimize the penalty to the user bias. The optimized lambda for the user effect is denoted as u_lambda.
+
+```{r}
+# Model 5: regularized user bias
+#Include a regularized user bias to lower the importance of the user bias for users who did not yet rate a lot of movies
+
+#Optimize the lambda parameter in the regularization formula
+lambdas <- seq(0, 10, 0.25)
+avg_rating <- mean(edx_train_set$rating)
+sum_rating_minus_avg <- edx_train_set %>% 
+  group_by(userId) %>% 
+  summarize(s = sum(rating - avg_rating), n_i = n())
+
+RMSEs <- sapply(lambdas, function(l){
+  predicted_ratings <- edx_test_set %>% 
+    left_join(sum_rating_minus_avg, by='userId') %>% 
+    mutate(u_bias = s/(n_i+l)) %>%
+    mutate(prediction = avg_rating + u_bias) %>%
+    .$pred
+  return(RMSE(predicted_ratings, edx_test_set$rating))
+})
+qplot(lambdas, RMSEs)
+u_lambda <- lambdas[which.min(RMSEs)]
+
+u_lambda
+
+all_RMSEs <- bind_rows(all_RMSEs,
+                       data_frame(method="Model 5: regularized user bias",
+                                  RMSE = min(RMSEs)))
+all_RMSEs %>% knitr::kable()
+```
+
+
+### Model 6: modeling movie effect and user effect using the regularized biases and lambdas from the previous models
+
+In model 6, model 4 and 5 are combined so that a regularized bias for the movie and user effect is used. The lambdas optimized in each model are being used: 5.5 for the movie bias and 1.75 for the user bias.
+
+```{r}
+# Model 6: regularized movie bias + user bias
+#Now include both a regularized user bias with lambda 5.5 and a regularized movie bias with lambda 1.75
+u_lambda <- 5.5
+m_lambda <- 1.75
+
+avg_rating <- mean(edx_train_set$rating)
+
+# regularized movie bias based on the lambda calculated in model 4
+reg_movie_bias <- edx_train_set %>% 
+  group_by(movieId) %>% 
+  summarize(reg_m_bias = (sum(rating - avg_rating))/(n()+m_lambda))
+
+# regularized user bias based on the lambda calculated in model 5
+reg_user_bias <- edx_train_set %>% 
+  left_join(reg_movie_bias, by='movieId') %>%
+  group_by(userId) %>% 
+  summarize(reg_u_bias = (sum(rating - avg_rating - reg_m_bias))/(n()+u_lambda))
+ 
+model_6_prediction <- edx_test_set %>%
+  left_join(reg_movie_bias, by='movieId') %>%
+  left_join(reg_user_bias, by='userId') %>%
+  mutate(prediction = avg_rating + reg_m_bias + reg_u_bias) %>%
+  .$prediction
+
+model_6_RMSE <- RMSE(model_6_prediction, edx_test_set$rating)
+
+all_RMSEs <- bind_rows(all_RMSEs,
+                       data_frame(method="Model 6: regularized movie bias + regularized user bias",
+                                  RMSE = model_6_RMSE))
+all_RMSEs %>% knitr::kable()
+```
+
+### Model 7: modeling movie effect and user effect using regularized biases by optimizing lambda simultaneously for both effects.
+
+In model 7 the same lambda will be used for regularizing both the movie and user effect. 
+
+
+```{r}
+# Model 7: regularized movie bias + user bias 2
+# In the second type the lambda is simultaneously optimized for the movie bias and the user bias
+
+# First optimize the lambda
+avg_rating <- mean(edx_train_set$rating)
+lambdas <- seq(0, 10, 0.25)
+
+RMSEs <- sapply(lambdas, function(um_lambda){
+  reg_movie_bias <- edx_train_set %>% 
+    group_by(movieId) %>% 
+    summarize(reg_m_bias = (sum(rating - avg_rating))/(n()+um_lambda))
+  reg_user_bias <- edx_train_set %>% 
+    left_join(reg_movie_bias, by='movieId') %>%
+    group_by(userId) %>% 
+    summarize(reg_u_bias = (sum(rating - avg_rating - reg_m_bias))/(n()+um_lambda))
+  predicted_ratings <- edx_test_set %>%
+    left_join(reg_movie_bias, by='movieId') %>%
+    left_join(reg_user_bias, by='userId') %>%
+    mutate(prediction = avg_rating + reg_m_bias + reg_u_bias) %>%
+    .$prediction
+  return(RMSE(predicted_ratings, edx_test_set$rating))
+})
+
+qplot(lambdas, RMSEs)
+um_lambda <- lambdas[which.min(RMSEs)]
+um_lambda
+model_7_RMSE <- min(RMSEs)
+all_RMSEs <- bind_rows(all_RMSEs,
+                       data_frame(method="Model 7: regularized movie bias + regularized user bias 2",
+                                  RMSE = model_7_RMSE))
+all_RMSEs %>% knitr::kable()
+```
+
+### Model 8: Matrix factorization on residuals of model 7 (baseline model)
+
+Since model 7 exhibited the lowest RMSE the residuals from that model were used for matrix factorization. The residuals are obtained after subtracting the average rating, movie bias and user bias from each rating.
+
+
+```{r}
+# Model 8: Matrix factorization
+# To further enhance the recommendation the residuals have to be modeled using matrix factorization,
+# The matrix factorization will be performed using the recosystem package 
+# Model 7 will be used as baseline system to calculate the residuals 
+
+# Obtain the residuals using the lambda of model 7
+um_lambda <- 4.75
+avg_rating <- mean(edx_train_set$rating)
+
+reg_movie_bias <- edx_train_set %>% 
+  group_by(movieId) %>% 
+  summarize(reg_m_bias = (sum(rating - avg_rating))/(n()+um_lambda))
+reg_user_bias <- edx_train_set %>% 
+  left_join(reg_movie_bias, by='movieId') %>%
+  group_by(userId) %>% 
+  summarize(reg_u_bias = (sum(rating - avg_rating - reg_m_bias))/(n()+um_lambda))
+
+predicted_ratings_m7 <- 
+  edx_test_set %>% 
+  left_join(reg_movie_bias, by = "movieId") %>%
+  left_join(reg_user_bias, by = "userId") %>%
+  mutate(pred = avg_rating + reg_m_bias + reg_u_bias)%>%
+  pull(pred) 
+
+residuals_train_set <- edx_train_set %>% 
+  left_join(reg_movie_bias, by = "movieId") %>%
+  left_join(reg_user_bias, by = "userId") %>%
+  mutate(residual = rating - avg_rating - reg_m_bias - reg_u_bias) %>%
+  select(userId, movieId, residual)
+head(residuals_train_set)
+```
+
+These residuals are the basis for matrix factorization. For the recosystem package both edx training and test set need to be transformed into three-column matrices with users, movies and residuals/ratings as column identifiers. These matrices are then temporarily written onto the hard disk, using less RAM memory. Then, the Reco() function in the recosystem package will be used to built a recommender object of which a set of parameters will be trained using the edx training matrix.
+
+Using the optimized parameters and test data a prediction model is made. The prediction is made with the base prediction of model 7 and the residuals predicted here. Finally, an RMSE is calculated.
+
+```{r}
+# Use recosystem package to perform matrix factorization
+install.packages("recosystem")
+library(recosystem)
+matrix_train_residuals <- residuals_train_set %>% as.matrix() 
+matrix_test <- edx_test_set %>% 
+  select(userId, movieId, rating) %>%
+  as.matrix()
+
+# write the matrices on disk and assign them to a variable
+write.table(matrix_train_residuals , file = "matrixtrainresiduals.txt" , sep = " " , row.names = FALSE, col.names = FALSE)
+write.table(matrix_test, file = "matrix_test.txt" , sep = " " , row.names = FALSE, col.names = FALSE)
+
+set.seed(1992, sample.kind = "Rounding") 
+trainset <- data_file("matrixtrainresiduals.txt")
+testset <- data_file("matrix_test.txt")
+
+# make a recommender object
+recommender <-Reco()
+
+# tuning the recommender with the training data
+opts <- recommender$tune(trainset, opts = list(dim = c(10, 20, 30), lrate = c(0.1, 0.2),
+                                      costp_l1 = 0, costq_l1 = 0,
+                                      nthread = 1, niter = 10))
+opts
+
+# training the matrix factorization model
+
+recommender$train(trainset, opts = c(opts$min, nthread = 1, niter = 20))
+
+# prediction using trained model
+
+prediction <- tempfile()
+recommender$predict(testset, out_file(prediction))
+prediction_resid_matfac <- scan(prediction)
+prediction_ratings_matfac <- predicted_ratings_m7 + prediction_resid_matfac
+model_8_RMSE <- RMSE(prediction_ratings_matfac, edx_test_set$rating)
+model_8_RMSE
+all_RMSEs <- bind_rows(all_RMSEs,
+                       data_frame(method="Model 8: Matrix factorization",
+                                  RMSE = model_8_RMSE))
+all_RMSEs %>% knitr::kable()
+```
+
+
+### Final validation on model 8
+
+The RMSE of model 8 is the lowest of all models. However, the RMSE was calculated using the edx test set, which was also used to optimize the lambda in model 7. It is, however, not done in machine learning to use (part of) a data set for training and validation! Therefore, the recommendation algorithm of model 8 will be validated using the validation set separated from the Movielens 10M data set. This data set has not been used for training the algorithms and is thus perfect for validating model 8.
+
+For the baseline model the same steps as for the development of model 7 are used, while for the residuals the matrix factorization method from model 8 is used. Here the complete edx set is used as a training set and the lambda derived in model 7 is used as regularization parameter for the movie and user effect.
+
+```{r}
+## Final validation with model 8
+# Now use complete edx set for training
+#first use model 7 for regularized user and movie bias
+avg_rating <- mean(edx$rating)
+lambdas <- seq(0, 10, 0.25)
+
+um_lambda <- 4.75
+avg_rating <- mean(edx$rating)
+
+reg_movie_bias_valid <- edx %>% 
+  group_by(movieId) %>% 
+  summarize(reg_m_bias = (sum(rating - avg_rating))/(n()+um_lambda))
+reg_user_bias_valid <- edx %>% 
+  left_join(reg_movie_bias_valid, by='movieId') %>%
+  group_by(userId) %>% 
+  summarize(reg_u_bias = (sum(rating - avg_rating - reg_m_bias))/(n()+um_lambda))
+
+predicted_ratings_validation <- 
+  validation %>% 
+  left_join(reg_movie_bias_valid, by = "movieId") %>%
+  left_join(reg_user_bias_valid, by = "userId") %>%
+  mutate(pred = avg_rating + reg_m_bias + reg_u_bias)%>%
+  pull(pred) 
+
+residuals_edx_set <- edx %>% 
+  left_join(reg_movie_bias_valid, by = "movieId") %>%
+  left_join(reg_user_bias_valid, by = "userId") %>%
+  mutate(residual = rating - avg_rating - reg_m_bias - reg_u_bias) %>%
+  select(userId, movieId, residual)
+head(residuals_edx_set)
+
+matrix_edx_residuals <- residuals_edx_set %>% as.matrix() 
+matrix_validation <- validation %>% 
+  select(userId, movieId, rating) %>%
+  as.matrix()
+
+write.table(matrix_edx_residuals , file = "matrixedxresiduals.txt" , sep = " " , row.names = FALSE, col.names = FALSE)
+write.table(matrix_validation, file = "matrix_validation.txt" , sep = " " , row.names = FALSE, col.names = FALSE)
+
+set.seed(1992, sample.kind = "Rounding") 
+edxset <- data_file("matrixedxresiduals.txt")
+validationset <- data_file("matrix_validation.txt")
+
+# make a recommender object
+recommender_valid <-Reco()
+
+# tuning the recommender with the training data
+opts_valid <- recommender_valid$tune(edxset, opts = list(dim = c(10, 20, 30), lrate = c(0.1, 0.2),
+                                               costp_l1 = 0, costq_l1 = 0,
+                                               nthread = 1, niter = 10))
+opts_valid
+
+# training the matrix factorization model
+
+recommender_valid$train(edxset, opts = c(opts_valid$min, nthread = 1, niter = 20))
+
+prediction_validation <- tempfile()
+recommender_valid$predict(validationset, out_file(prediction_validation))
+prediction_validation_resid <- scan(prediction_validation)
+prediction_validation_ratings <- predicted_ratings_validation + prediction_validation_resid
+RMSE_validation <- RMSE(prediction_validation_ratings, validation$rating)
+RMSE_validation
+```
+
+## Conclusion
+
+This cap stone project has shown how a movie recommendation algorithm can be developed using data exploration and machine learning. This data science challenge was carried out using part of the classical MovieLens dataset. RMSE was used as the parameter to evaluate the different recommendation models. A summary of the RMSEs obtained during the development of the recommendation model are shown underneath.
+
+```{r, echo=F}
+all_RMSEs <- bind_rows(all_RMSEs,
+                       data_frame(method="Model 8 Validation",
+                                  RMSE = RMSE_validation))
+all_RMSEs %>% knitr::kable()
+```
+
+The final RMSE table shows that model 8 has by far the lowest RMSE. This shows that matrix factorization is a very strong technique to discover patterns between users and movies based on a large and sparse set of ratings. These patterns could not be derived from purely analyzing the explicit information in the dataset. The final validation also confirms the strength of the recommendation algorithm of model 8. The baseline model could be further optimized by also adding a genre bias, movieage bias and a release year bias. In addition, using cross validation instead of a single test set would be more reliable for determining the regularization parameter.
